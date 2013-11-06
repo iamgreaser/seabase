@@ -103,6 +103,8 @@ void cell_reset_gas(cell_t *c);
 void map_tick_atmos(map_t *map);
 
 // sq.c
+SQInteger fsq_turf_get_gas(HSQUIRRELVM S);
+SQInteger fsq_turf_set_gas(HSQUIRRELVM S);
 SQInteger fsq_turf_reset_gas(HSQUIRRELVM S);
 SQInteger fsq_turf_set_type(HSQUIRRELVM S);
 SQInteger fsq_map_new(HSQUIRRELVM S);

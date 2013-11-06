@@ -87,6 +87,12 @@ int main(int argc, const char *argv)
 	sq_pushstring(S_client, "turf_reset_gas", -1);
 	sq_newclosure(S_client, (SQFUNCTION)fsq_turf_reset_gas, 0);
 	sq_newslot(S_client, -3, SQFalse);
+	sq_pushstring(S_client, "turf_get_gas", -1);
+	sq_newclosure(S_client, (SQFUNCTION)fsq_turf_get_gas, 0);
+	sq_newslot(S_client, -3, SQFalse);
+	sq_pushstring(S_client, "turf_set_gas", -1);
+	sq_newclosure(S_client, (SQFUNCTION)fsq_turf_set_gas, 0);
+	sq_newslot(S_client, -3, SQFalse);
 	sq_pop(S_client, 1);
 
 	SDL_WM_SetCaption("Sea Base Omega - 0.0 prealpha", NULL);

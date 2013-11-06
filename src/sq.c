@@ -5,6 +5,83 @@
 extern map_t *map_client;
 
 /**
+	\brief SQ: Gets a gas/liquid type for a cell.
+
+	\param map
+	\param x
+	\param y
+	\param type
+
+	\return Gas level for that given type.
+*/
+SQInteger fsq_turf_get_gas(HSQUIRRELVM S)
+{
+	SQInteger top = sq_gettop(S);
+	if(top != 5) return SQ_ERROR;
+
+	SQUserPointer map_ud;
+	SQInteger x, y, type;
+	if(SQ_FAILED(sq_getuserpointer(S, 2, &map_ud))) return SQ_ERROR;
+	if(SQ_FAILED(sq_getinteger(S, 3, &x))) return SQ_ERROR;
+	if(SQ_FAILED(sq_getinteger(S, 4, &y))) return SQ_ERROR;
+	if(SQ_FAILED(sq_getinteger(S, 5, &type))) return SQ_ERROR;
+
+	map_t *map = (map_t *)map_ud;
+	if(map->ud != UD_MAP) return SQ_ERROR;
+	if(x < 0) return SQ_ERROR;
+	if(y < 0) return SQ_ERROR;
+	if(x >= map->w) return SQ_ERROR;
+	if(y >= map->h) return SQ_ERROR;
+
+	if(type < 0) return SQ_ERROR;
+	if(type >= GAS_COUNT) return SQ_ERROR;
+
+	int mi = y*map->w + x;
+	sq_pushfloat(S, map->c[mi].gas.a[type]);
+	return 1;
+}
+
+/**
+	\brief SQ: Sets a gas/liquid type for a cell.
+
+	\param map
+	\param x
+	\param y
+	\param type
+	\param val
+*/
+SQInteger fsq_turf_set_gas(HSQUIRRELVM S)
+{
+	SQInteger top = sq_gettop(S);
+	if(top != 6) return SQ_ERROR;
+
+	SQUserPointer map_ud;
+	SQInteger x, y, type;
+	SQFloat val;
+	if(SQ_FAILED(sq_getuserpointer(S, 2, &map_ud))) return SQ_ERROR;
+	if(SQ_FAILED(sq_getinteger(S, 3, &x))) return SQ_ERROR;
+	if(SQ_FAILED(sq_getinteger(S, 4, &y))) return SQ_ERROR;
+	if(SQ_FAILED(sq_getinteger(S, 5, &type))) return SQ_ERROR;
+	if(SQ_FAILED(sq_getfloat(S, 6, &val))) return SQ_ERROR;
+
+	map_t *map = (map_t *)map_ud;
+	if(map->ud != UD_MAP) return SQ_ERROR;
+	if(x < 0) return SQ_ERROR;
+	if(y < 0) return SQ_ERROR;
+	if(x >= map->w) return SQ_ERROR;
+	if(y >= map->h) return SQ_ERROR;
+
+	if(type < 0) return SQ_ERROR;
+	if(type >= GAS_COUNT) return SQ_ERROR;
+
+	int mi = y*map->w + x;
+	map->c[mi].gas.a[type] = val;
+
+	return 0;
+}
+
+
+/**
 	\brief SQ: Resets the gas levels to defaults for a turf.
 
 	\param map
@@ -17,7 +94,7 @@ SQInteger fsq_turf_reset_gas(HSQUIRRELVM S)
 	if(top != 4) return SQ_ERROR;
 
 	SQUserPointer map_ud;
-	SQInteger x, y, type;
+	SQInteger x, y;
 	if(SQ_FAILED(sq_getuserpointer(S, 2, &map_ud))) return SQ_ERROR;
 	if(SQ_FAILED(sq_getinteger(S, 3, &x))) return SQ_ERROR;
 	if(SQ_FAILED(sq_getinteger(S, 4, &y))) return SQ_ERROR;

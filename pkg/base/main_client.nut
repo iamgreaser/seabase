@@ -24,7 +24,7 @@ local test_map = [
 	"  #.....#           ",
 	"  #######           ",
 	"     #..####        ",
-	"     #.....#        ",
+	"     #.$...#        ",
 	"     #..####        ",
 	"   ########         ",
 	"   #......#         ",
@@ -42,9 +42,19 @@ TURF <- {
 	WALL = 2,
 };
 
+GAS <- {
+	WATER = 0,
+
+	O2 = 1,
+	N2 = 2,
+	CO2 = 3,
+	CH4 = 4,
+};
+
 local test_map_trn = {
 	[" "] = TURF.WATER,
 	["."] = TURF.FLOOR,
+	["$"] = TURF.FLOOR,
 	["#"] = TURF.WALL,
 };
 
@@ -61,9 +71,16 @@ foreach(y,s in test_map)
 		local ctype = test_map_trn[c.tochar()];
 		turf_set_type(map, x, y, ctype);
 		turf_reset_gas(map, x, y);
+
 		if(ctype == TURF.WALL)
 		{
 			wall_list.append([x, y]);
+		}
+
+		if(c.tochar() == "$")
+		{
+			drain_x <- x;
+			drain_y <- y;
 		}
 	}
 }
@@ -93,5 +110,8 @@ function hook_tick(sec_current, sec_delta)
 		y = wall_list[deadwall][1];
 		turf_set_type(map, x, y, TURF.FLOOR);
 	}
+
+	turf_set_gas(map, drain_x, drain_y, GAS.WATER,
+		turf_get_gas(map, drain_x, drain_y, GAS.WATER) * 0.8);
 }
 
