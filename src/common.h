@@ -19,15 +19,22 @@
 #define D_W 0x04
 #define D_N 0x08
 
-typedef struct gasmix
+#define GAS_COUNT 5
+typedef union gasmix
 {
-	// i'll explain what roles these fulfil.
-	float o2; // breathable.
-	float n2; // padding.
-	float co2; // processed o2.
-	float ch4; // poisonous. also, flammable.
+	struct {
+		// i'll explain what roles these fulfil.
+		float water; // this is a sea base.
 
-	float water; // this is a sea base.
+		float o2; // breathable.
+		float n2; // padding.
+		float co2; // processed o2.
+		float ch4; // poisonous. also, flammable.
+
+		float vx, vy; // velocity
+	} g;
+
+	float a[GAS_COUNT];
 } gasmix_t;
 
 /*
@@ -75,9 +82,8 @@ typedef struct cell cell_t;
 struct cell
 {
 	gasmix_t gas;
-	gasmix_t gas_new;
+	gasmix_t gas_old;
 	turf_t turf;
-	float vx, vy;
 };
 
 typedef struct map
@@ -91,6 +97,10 @@ typedef struct map
 char *file_get_direct(const char *fname, int *len);
 char *file_get(const char *fname, int *len);
 int hsq_compile(HSQUIRRELVM S, const char *fname);
+
+// map.c
+void cell_reset_gas(cell_t *c);
+void map_tick_atmos(map_t *map);
 
 // sq.c
 SQInteger fsq_turf_reset_gas(HSQUIRRELVM S);

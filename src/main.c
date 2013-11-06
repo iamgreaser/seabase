@@ -11,34 +11,6 @@ map_t *map_client = NULL;
 map_t *map_server = NULL;
 
 /**
-	\brief Resets the gas for a cell according to the turf type.
-
-	\param c Cell to reset.
-*/
-void cell_reset_gas(cell_t *c)
-{
-	c->vx = c->vy = 0.0f;
-
-	c->gas.co2 = 0.0f;
-	c->gas.ch4 = 0.0f;
-	c->gas.water = 0.0f;
-	c->gas.o2 = 0.0f;
-	c->gas.n2 = 0.0f;
-	switch(c->turf.type)
-	{
-		case TURF_WATER:
-			c->gas.water = 1.0f;
-			break;
-		case TURF_FLOOR:
-			c->gas.o2 = 0.2f;
-			c->gas.n2 = 0.8f;
-			break;
-		default:
-			break;
-	}
-}
-
-/**
 	\brief Simple stdout print function for the Squirrel VM.
 */
 void hsq_print_stdout(HSQUIRRELVM S, const SQChar *buf, ...)
@@ -69,6 +41,18 @@ SQInteger hsq_error(HSQUIRRELVM S)
 
 	return 0;
 }
+
+uint8_t dithtab2[4] = {
+	0, 2,
+	3, 1,
+};
+
+uint8_t dithtab4[16] = {
+	0x0, 0x8, 0x2, 0xA,
+	0xC, 0x4, 0xE, 0x6,
+	0x3, 0xB, 0x1, 0x9,
+	0xF, 0x7, 0xD, 0x5,
+};
 
 int main(int argc, const char *argv)
 {
@@ -117,6 +101,7 @@ int main(int argc, const char *argv)
 		int x, y;
 		memset(screen->pixels, 0, screen->pitch*screen->h);
 
+		map_tick_atmos(map_client);
 		for(y = 0; y < map_client->h && y < 37; y++)
 		for(x = 0; x < map_client->w && x < 50; x++)
 		{
@@ -139,14 +124,19 @@ int main(int argc, const char *argv)
 					break;
 
 			}
-			v = (((int)(c->gas.o2*255))<<8) | ((int)(c->gas.water*255)) | 0xFF000000;
+			v = (((int)(c->gas.g.o2*255))<<8) | (((int)(c->gas.g.n2*255))<<16) | 0xFF000000;
 
 			for(sy = 0; sy < 16; sy++)
 			{
 				p = (uint32_t *)(screen->pixels + (y*16+sy)*screen->pitch);
 				p += x*16;
 				for(sx = 0; sx < 16; sx++)
-					*(p++) = v;
+				{
+					int dtidx = (sx&3)|((sy&3)<<2);
+					*(p++) = (c->gas.g.water*16.0f - 0.5f > dithtab4[dtidx]
+						? 0x000000FF
+						: 0x00000000) | v;
+				}
 			}
 		}
 		SDL_Flip(screen);

@@ -4,6 +4,7 @@ SRCDIR = src
 INCLUDES = src/common.h
 OBJS = \
 	$(OBJDIR)/file.o \
+	$(OBJDIR)/map.o \
 	$(OBJDIR)/sq.o \
 	$(OBJDIR)/main.o
 
