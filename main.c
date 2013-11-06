@@ -79,6 +79,7 @@ typedef struct cell cell_t;
 struct cell
 {
 	gasmix_t gas;
+	gasmix_t gas_new;
 	turf_t turf;
 	float vx, vy;
 };
@@ -216,6 +217,37 @@ void cell_reset_gas(cell_t *c)
 }
 
 /**
+	\brief SQ: Resets the gas levels to defaults for a turf.
+
+	\param map
+	\param x
+	\param y
+*/
+SQInteger fsq_turf_reset_gas(HSQUIRRELVM S)
+{
+	SQInteger top = sq_gettop(S);
+	if(top != 4) return SQ_ERROR;
+
+	SQUserPointer map_ud;
+	SQInteger x, y, type;
+	if(SQ_FAILED(sq_getuserpointer(S, 2, &map_ud))) return SQ_ERROR;
+	if(SQ_FAILED(sq_getinteger(S, 3, &x))) return SQ_ERROR;
+	if(SQ_FAILED(sq_getinteger(S, 4, &y))) return SQ_ERROR;
+
+	map_t *map = (map_t *)map_ud;
+	if(map->ud != UD_MAP) return SQ_ERROR;
+	if(x < 0) return SQ_ERROR;
+	if(y < 0) return SQ_ERROR;
+	if(x >= map->w) return SQ_ERROR;
+	if(y >= map->h) return SQ_ERROR;
+
+	int mi = y*map->w + x;
+	cell_reset_gas(&(map->c[mi]));
+
+	return 0;
+}
+
+/**
 	\brief SQ: Sets the turf type for a map.
 
 	\param map
@@ -344,12 +376,15 @@ int main(int argc, const char *argv)
 	sq_pushstring(S_client, "turf_set_type", -1);
 	sq_newclosure(S_client, (SQFUNCTION)fsq_turf_set_type, 0);
 	sq_newslot(S_client, -3, SQFalse);
+	sq_pushstring(S_client, "turf_reset_gas", -1);
+	sq_newclosure(S_client, (SQFUNCTION)fsq_turf_reset_gas, 0);
+	sq_newslot(S_client, -3, SQFalse);
 	sq_pop(S_client, 1);
 
 	SDL_WM_SetCaption("Sea Base Omega - 0.0 prealpha", NULL);
 	screen = SDL_SetVideoMode(800, 600, 32, 0);
 
-	if(hsq_compile(S_client, "pkg/base/main_client.sq"))
+	if(hsq_compile(S_client, "pkg/base/main_client.nut"))
 	{
 		sq_pushroottable(S_client);
 		sq_call(S_client, 1, SQFalse, SQTrue);
@@ -358,42 +393,57 @@ int main(int argc, const char *argv)
 		printf("File failed to compile\n");
 	}
 
-	int x, y;
-	memset(screen->pixels, 0, screen->pitch*screen->h);
-	for(y = 0; y < map_client->h && y < 37; y++)
-	for(x = 0; x < map_client->w && x < 50; x++)
+	int quitflag = 0;
+	while(!quitflag)
 	{
-		uint32_t *p;
-		int sx, sy;
+		int x, y;
+		memset(screen->pixels, 0, screen->pitch*screen->h);
 
-		cell_t *c = &(map_client->c[y*map_client->h + x]);
-		uint32_t v = 0xFFFF00FF;
-
-		switch(c->turf.type)
+		for(y = 0; y < map_client->h && y < 37; y++)
+		for(x = 0; x < map_client->w && x < 50; x++)
 		{
-			case TURF_WATER:
-				v = 0xFF0000FF;
-				break;
-			case TURF_FLOOR:
-				v = 0xFFAAAAAA;
-				break;
-			case TURF_WALL:
-				v = 0xFF555555;
-				break;
+			uint32_t *p;
+			int sx, sy;
 
+			cell_t *c = &(map_client->c[y*map_client->h + x]);
+			uint32_t v = 0xFFFF00FF;
+
+			switch(c->turf.type)
+			{
+				case TURF_WATER:
+					v = 0xFF0000FF;
+					break;
+				case TURF_FLOOR:
+					v = 0xFFAAAAAA;
+					break;
+				case TURF_WALL:
+					v = 0xFF555555;
+					break;
+
+			}
+			v = (((int)(c->gas.o2*255))<<8) | ((int)(c->gas.water*255)) | 0xFF000000;
+
+			for(sy = 0; sy < 16; sy++)
+			{
+				p = (uint32_t *)(screen->pixels + (y*16+sy)*screen->pitch);
+				p += x*16;
+				for(sx = 0; sx < 16; sx++)
+					*(p++) = v;
+			}
 		}
+		SDL_Flip(screen);
 
-		for(sy = 0; sy < 16; sy++)
+		SDL_Delay(10);
+
+		SDL_Event ev;
+		while(SDL_PollEvent(&ev))
+		switch(ev.type)
 		{
-			p = (uint32_t *)(screen->pixels + (y*16+sy)*screen->pitch);
-			p += x*16;
-			for(sx = 0; sx < 16; sx++)
-				*(p++) = v;
+			case SDL_QUIT:
+				quitflag = 1;
+				break;
 		}
 	}
-	SDL_Flip(screen);
-
-	SDL_Delay(1000);
 
 	sq_close(S_client);
 	sq_close(S_server);

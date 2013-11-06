@@ -15,7 +15,7 @@ local test_map = [
 	"     #..####        ",
 	"   ###..###         ",
 	"   #......#         ",
-	"   #......#         ",
+	"   #.......         ",
 	"   ########         ",
 	"                    ",
 	"                    ",
@@ -45,7 +45,7 @@ foreach(y,s in test_map)
 	{
 		local ctype = test_map_trn[c.tochar()]
 		turf_set_type(map, x, y, ctype);
-		//turf_reset_gas(x, y);
+		turf_reset_gas(map, x, y);
 	}
 }
 
