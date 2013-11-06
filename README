@@ -1,0 +1,18 @@
+Sea Base Omega is currently a bunch of hacked together code to draw a pretty picture.
+
+What it's meant to be is a 2D tile-based underwater atmospheric simulation with a game tacked on.
+Like Space Station 13, but underwater.
+
+Libraries required to build:
+- SDL 1.2 - http://libsdl.org/
+- Squirrel 3.0 - http://squirrel-lang.org/
+
+Libraries soon to be required:
+- ENet - http://enet.bespin.org/
+
+SDL 2.0 support should be coming soon.
+
+Unlike Iceball, there will be no TCP-based protocol, just an ENet one. Having to write that TCP stuff all over again would just be a total waste of time.
+
+This engine is not expected to be as flexible as Iceball's, as I need to ensure that the atmos sim runs quickly.
+
