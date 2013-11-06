@@ -1,7 +1,7 @@
 OBJDIR = build
-SRCDIR = .
+SRCDIR = src
 
-INCLUDES = common.h
+INCLUDES = src/common.h
 OBJS = \
 	$(OBJDIR)/file.o \
 	$(OBJDIR)/sq.o \
@@ -22,12 +22,12 @@ all: $(BINNAME)
 clean:
 	rm -f $(OBJS)
 
-$(BINNAME): $(OBJS)
+$(BINNAME): $(OBJS) $(OBJDIR)
 	$(CC) -o $(BINNAME) $(LDFLAGS) $(OBJS) $(LIBS)
 
 $(OBJDIR):
 	$(MKDIR_P) $(OBJDIR)
 
-$(OBJDIR)/%.o: $(SRCDIR)/%.c $(INCLUDES) $(OBJDIR)
+$(OBJDIR)/%.o: $(SRCDIR)/%.c $(INCLUDES)
 	$(CC) -c -o $@ $(CFLAGS) $<
 

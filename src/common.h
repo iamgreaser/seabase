@@ -88,6 +88,9 @@ typedef struct map
 } map_t;
 
 // file.c
+char *file_get_direct(const char *fname, int *len);
+char *file_get(const char *fname, int *len);
+int hsq_compile(HSQUIRRELVM S, const char *fname);
 
 // sq.c
 SQInteger fsq_turf_reset_gas(HSQUIRRELVM S);
