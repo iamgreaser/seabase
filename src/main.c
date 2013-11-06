@@ -10,6 +10,8 @@ HSQUIRRELVM S_server;
 map_t *map_client = NULL;
 map_t *map_server = NULL;
 
+int bubcount = 0;
+
 /**
 	\brief Simple stdout print function for the Squirrel VM.
 */
@@ -68,6 +70,10 @@ int main(int argc, const char *argv)
 	sq_setprintfunc(S_server, (SQPRINTFUNCTION)hsq_print_stdout);
 	sq_setprintfunc(S_client, (SQPRINTFUNCTION)hsq_print_stdout);
 
+	sq_pushroottable(S_client);
+	sqstd_register_mathlib(S_client);
+	sq_pop(S_client, 1);
+
 	sq_newclosure(S_client, (SQFUNCTION)hsq_error, 0);
 	sq_seterrorhandler(S_client);
 
@@ -101,47 +107,68 @@ int main(int argc, const char *argv)
 		int x, y;
 		memset(screen->pixels, 0, screen->pitch*screen->h);
 
-		map_tick_atmos(map_client);
-		for(y = 0; y < map_client->h && y < 18; y++)
-		for(x = 0; x < map_client->w && x < 25; x++)
+		// TODO: make this not crash when hook_tick DNE
+		sq_pushroottable(S_client);
+		sq_pushstring(S_client, "hook_tick", -1);
+		if(SQ_SUCCEEDED(sq_get(S_client, -2)))
 		{
-			uint32_t *p;
-			int sx, sy;
+			sq_pushroottable(S_client);
+			sq_pushfloat(S_client, 0.0);
+			sq_pushfloat(S_client, 0.0);
+			sq_call(S_client, 3, SQFalse, SQTrue);
+			sq_pop(S_client, 2);
+		} else {
+			printf("hook_tick DNE\n");
+			sq_pop(S_client, 1);
+		}
 
-			cell_t *c = &(map_client->c[y*map_client->h + x]);
-			uint32_t v = 0xFFFF00FF;
-
-			switch(c->turf.type)
+		if(map_client != NULL)
+		{
+			map_tick_atmos(map_client);
+			for(y = 0; y < map_client->h && y < 18; y++)
+			for(x = 0; x < map_client->w && x < 25; x++)
 			{
-				case TURF_WATER:
-					v = 0xFF0000FF;
-					break;
-				case TURF_FLOOR:
-					v = 0xFFAAAAAA;
-					break;
-				case TURF_WALL:
-					v = 0xFF555555;
-					break;
+				uint32_t *p;
+				int sx, sy;
 
-			}
-			v = (((int)(c->gas.g.o2*255))<<8) | (((int)(c->gas.g.n2*255))<<16) | 0xFF000000;
+				cell_t *c = &(map_client->c[y*map_client->h + x]);
+				uint32_t v = 0xFFFF00FF;
 
-			for(sy = 0; sy < 32; sy++)
-			{
-				p = (uint32_t *)(screen->pixels + (y*32+sy)*screen->pitch);
-				p += x*32;
-				for(sx = 0; sx < 32; sx++)
+				switch(c->turf.type)
 				{
-					int dtidx = ((sx>>1)&3)|(((sy>>1)&3)<<2);
-					*(p++) = (c->gas.g.water*16.0f - 0.5f > dithtab4[dtidx]
-						? 0x000000FF
-						: 0x00000000) | v;
+					case TURF_WATER:
+						v = 0xFF0000FF;
+						break;
+					case TURF_FLOOR:
+						v = 0xFFAAAAAA;
+						break;
+					case TURF_WALL:
+						v = 0xFF555555;
+						break;
+
+				}
+				v = (((int)(c->gas.g.o2*255))<<8) | (((int)(c->gas.g.n2*255))<<16) | 0xFF000000;
+
+				for(sy = 0; sy < 32; sy++)
+				{
+					p = (uint32_t *)(screen->pixels + (y*32+sy)*screen->pitch);
+					p += x*32;
+					for(sx = 0; sx < 32; sx++)
+					{
+						int dtidx = ((sx>>1)&3)|(((sy>>1)&3)<<2);
+						dtidx = (dtidx+(bubcount>>3))&15;
+						*(p++) = (c->gas.g.water*16.0f - 0.5f > dithtab4[dtidx]
+							? 0x000000FF
+							: 0x00000000) | v;
+					}
 				}
 			}
 		}
 		SDL_Flip(screen);
 
 		SDL_Delay(10);
+
+		bubcount++;
 
 		SDL_Event ev;
 		while(SDL_PollEvent(&ev))

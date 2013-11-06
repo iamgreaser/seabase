@@ -8,9 +8,9 @@ OBJS = \
 	$(OBJDIR)/sq.o \
 	$(OBJDIR)/main.o
 
-CFLAGS = -I/usr/include/squirrel `sdl-config --cflags`
-LDFLAGS = 
-LIBS = -lm `sdl-config --libs` -lsquirrel
+CFLAGS = -g -O2 -I/usr/include/squirrel `sdl-config --cflags`
+LDFLAGS = -g
+LIBS = -lm `sdl-config --libs` -lsquirrel -lsqstdlib
 
 BINNAME = seabase
 
