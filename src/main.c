@@ -102,8 +102,8 @@ int main(int argc, const char *argv)
 		memset(screen->pixels, 0, screen->pitch*screen->h);
 
 		map_tick_atmos(map_client);
-		for(y = 0; y < map_client->h && y < 37; y++)
-		for(x = 0; x < map_client->w && x < 50; x++)
+		for(y = 0; y < map_client->h && y < 18; y++)
+		for(x = 0; x < map_client->w && x < 25; x++)
 		{
 			uint32_t *p;
 			int sx, sy;
@@ -126,13 +126,13 @@ int main(int argc, const char *argv)
 			}
 			v = (((int)(c->gas.g.o2*255))<<8) | (((int)(c->gas.g.n2*255))<<16) | 0xFF000000;
 
-			for(sy = 0; sy < 16; sy++)
+			for(sy = 0; sy < 32; sy++)
 			{
-				p = (uint32_t *)(screen->pixels + (y*16+sy)*screen->pitch);
-				p += x*16;
-				for(sx = 0; sx < 16; sx++)
+				p = (uint32_t *)(screen->pixels + (y*32+sy)*screen->pitch);
+				p += x*32;
+				for(sx = 0; sx < 32; sx++)
 				{
-					int dtidx = (sx&3)|((sy&3)<<2);
+					int dtidx = ((sx>>1)&3)|(((sy>>1)&3)<<2);
 					*(p++) = (c->gas.g.water*16.0f - 0.5f > dithtab4[dtidx]
 						? 0x000000FF
 						: 0x00000000) | v;
