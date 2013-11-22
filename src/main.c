@@ -55,27 +55,44 @@ int main(int argc, const char *argv)
 	L_client = luaL_newstate();
 
 	// TODO: restrict the libraries loaded to a subset
+	printf("Loading functions\n");
 	luaL_openlibs(L_server);
 	luaL_openlibs(L_client);
 
 #define ADDFN_L(L, f, s) \
 		lua_pushcfunction(L, f); \
-		lua_setglobal(L, s);
+		lua_pushvalue(L, -1); \
+		lua_setfield(L, -3, s); \
+		lua_setfield(L, -3, s);
+
+	// client/server tables
+	lua_newtable(L_client);
+	lua_newtable(L_server);
+
+	// common functions
 #define ADDFN(f, s) \
 		ADDFN_L(L_client, f, s); \
 		ADDFN_L(L_server, f, s);
-
+	lua_newtable(L_client);
+	lua_newtable(L_server);
 	ADDFN(fl_map_new, "map_new");
 	ADDFN(fl_turf_set_type, "turf_set_type");
 	ADDFN(fl_turf_reset_gas, "turf_reset_gas");
 	ADDFN(fl_turf_get_gas, "turf_get_gas");
 	ADDFN(fl_turf_set_gas, "turf_set_gas");
+	lua_setglobal(L_client, "common");
+	lua_setglobal(L_server, "common");
+#undef ADDFN
+	lua_setglobal(L_client, "client");
+	lua_setglobal(L_server, "server");
+	printf("Functions loaded\n");
 
 	SDL_WM_SetCaption("Sea Base Omega - 0.0 prealpha", NULL);
 	screen = SDL_SetVideoMode(800, 600, 32, 0);
 
 	if(luaL_loadfile(L_client, "pkg/base/main_client.lua") == 0)
 	{
+		// TODO: use pcall
 		lua_call(L_client, 0, 0);
 	} else {
 		printf("File failed to compile: %s\n", lua_tostring(L_client, -1));
