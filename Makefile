@@ -5,12 +5,13 @@ INCLUDES = src/common.h
 OBJS = \
 	$(OBJDIR)/file.o \
 	$(OBJDIR)/map.o \
-	$(OBJDIR)/sq.o \
+	$(OBJDIR)/lua.o \
+	$(OBJDIR)/lua_turf.o \
 	$(OBJDIR)/main.o
 
-CFLAGS = -g -O2 -I/usr/include/squirrel `sdl-config --cflags`
+CFLAGS = -g -O2 `sdl-config --cflags`
 LDFLAGS = -g
-LIBS = -lm `sdl-config --libs` -lsquirrel -lsqstdlib
+LIBS = -lm `sdl-config --libs` -llua-5.1
 
 BINNAME = seabase
 

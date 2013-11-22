@@ -70,24 +70,3 @@ char *file_get(const char *fname, int *len)
 	return file_get_direct(fname, len);
 }
 
-/**
-	\brief Compile a file using file_get.
-
-	\param S Relevant Squirrel virtual machine.
-	\param fname Name of file to be read.
-	\return Boolean indicating if the operation succeeded.
-*/
-int hsq_compile(HSQUIRRELVM S, const char *fname)
-{
-	int blen = 0;
-	char *buf = file_get(fname, &blen);
-
-	if(buf == NULL)
-		return 0;
-
-	SQRESULT ret = sq_compilebuffer(S, buf, blen, fname, SQTrue);
-	free(buf);
-
-	return SQ_SUCCEEDED(ret);
-}
-

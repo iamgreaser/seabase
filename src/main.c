@@ -5,16 +5,18 @@ i'll sort out the licensing crap when i get around to it --GM
 #include "common.h"
 
 SDL_Surface *screen;
-HSQUIRRELVM S_client;
-HSQUIRRELVM S_server;
+lua_State *L_client;
+lua_State *L_server;
 map_t *map_client = NULL;
 map_t *map_server = NULL;
 
 int bubcount = 0;
 
 /**
-	\brief Simple stdout print function for the Squirrel VM.
+	// brief Simple stdout print function for the Squirrel VM.
+	Might be useful later?
 */
+/*
 void hsq_print_stdout(HSQUIRRELVM S, const SQChar *buf, ...)
 {
 	va_list vl;
@@ -27,22 +29,7 @@ void hsq_print_stdout(HSQUIRRELVM S, const SQChar *buf, ...)
 
 	printf("\n");
 }
-
-/**
-	\brief Simple error handler for the Squirrel VM.
 */
-SQInteger hsq_error(HSQUIRRELVM S)
-{
-	SQInteger top = sq_gettop(S);
-
-	printf("*ERROR* ");
-	printf((S == S_server ? "[server] " : S == S_client ? "[client] " : "[??????] "));
-	const SQChar *c1 = "FAIL";
-	sq_getstring(S, -1, &c1);
-	printf("%s\n", c1);
-
-	return 0;
-}
 
 uint8_t dithtab2[4] = {
 	0, 2,
@@ -64,48 +51,37 @@ int main(int argc, const char *argv)
 	signal(SIGINT, SIG_DFL);
 	signal(SIGTERM, SIG_DFL);
 
-	S_server = sq_open(1024);
-	S_client = sq_open(1024);
+	L_server = luaL_newstate();
+	L_client = luaL_newstate();
 
-	sq_setprintfunc(S_server, (SQPRINTFUNCTION)hsq_print_stdout);
-	sq_setprintfunc(S_client, (SQPRINTFUNCTION)hsq_print_stdout);
+	// TODO: restrict the libraries loaded to a subset
+	luaL_openlibs(L_server);
+	luaL_openlibs(L_client);
 
-	sq_pushroottable(S_client);
-	sqstd_register_mathlib(S_client);
-	sq_pop(S_client, 1);
+#define ADDFN_L(L, f, s) \
+		lua_pushcfunction(L, f); \
+		lua_setglobal(L, s);
+#define ADDFN(f, s) \
+		ADDFN_L(L_client, f, s); \
+		ADDFN_L(L_server, f, s);
 
-	sq_newclosure(S_client, (SQFUNCTION)hsq_error, 0);
-	sq_seterrorhandler(S_client);
-
-	sq_pushroottable(S_client);
-	sq_pushstring(S_client, "map_new", -1);
-	sq_newclosure(S_client, (SQFUNCTION)fsq_map_new, 0);
-	sq_newslot(S_client, -3, SQFalse);
-	sq_pushstring(S_client, "turf_set_type", -1);
-	sq_newclosure(S_client, (SQFUNCTION)fsq_turf_set_type, 0);
-	sq_newslot(S_client, -3, SQFalse);
-	sq_pushstring(S_client, "turf_reset_gas", -1);
-	sq_newclosure(S_client, (SQFUNCTION)fsq_turf_reset_gas, 0);
-	sq_newslot(S_client, -3, SQFalse);
-	sq_pushstring(S_client, "turf_get_gas", -1);
-	sq_newclosure(S_client, (SQFUNCTION)fsq_turf_get_gas, 0);
-	sq_newslot(S_client, -3, SQFalse);
-	sq_pushstring(S_client, "turf_set_gas", -1);
-	sq_newclosure(S_client, (SQFUNCTION)fsq_turf_set_gas, 0);
-	sq_newslot(S_client, -3, SQFalse);
-	sq_pop(S_client, 1);
+	ADDFN(fl_map_new, "map_new");
+	ADDFN(fl_turf_set_type, "turf_set_type");
+	ADDFN(fl_turf_reset_gas, "turf_reset_gas");
+	ADDFN(fl_turf_get_gas, "turf_get_gas");
+	ADDFN(fl_turf_set_gas, "turf_set_gas");
 
 	SDL_WM_SetCaption("Sea Base Omega - 0.0 prealpha", NULL);
 	screen = SDL_SetVideoMode(800, 600, 32, 0);
 
-	if(hsq_compile(S_client, "pkg/base/main_client.nut"))
+	if(luaL_loadfile(L_client, "pkg/base/main_client.lua") == 0)
 	{
-		sq_pushroottable(S_client);
-		sq_call(S_client, 1, SQFalse, SQTrue);
-		sq_pop(S_client, 1);
+		lua_call(L_client, 0, 0);
 	} else {
-		printf("File failed to compile\n");
+		printf("File failed to compile: %s\n", lua_tostring(L_client, -1));
 	}
+
+	printf("init done\n");
 
 	int quitflag = 0;
 	while(!quitflag)
@@ -113,19 +89,16 @@ int main(int argc, const char *argv)
 		int x, y;
 		memset(screen->pixels, 0, screen->pitch*screen->h);
 
-		// TODO: make this not crash when hook_tick DNE
-		sq_pushroottable(S_client);
-		sq_pushstring(S_client, "hook_tick", -1);
-		if(SQ_SUCCEEDED(sq_get(S_client, -2)))
+		// TODO: use pcall
+		lua_getglobal(L_client, "hook_tick");
+		// TODO: give actual times
+		if(!lua_isnil(L_client, -1))
 		{
-			sq_pushroottable(S_client);
-			sq_pushfloat(S_client, 0.0);
-			sq_pushfloat(S_client, 0.0);
-			sq_call(S_client, 3, SQFalse, SQTrue);
-			sq_pop(S_client, 2);
+			lua_pushnumber(L_client, 0.0);
+			lua_pushnumber(L_client, 0.0);
+			lua_call(L_client, 2, 0);
 		} else {
 			printf("hook_tick DNE\n");
-			sq_pop(S_client, 1);
 		}
 
 		if(map_client != NULL)
@@ -185,9 +158,6 @@ int main(int argc, const char *argv)
 				break;
 		}
 	}
-
-	sq_close(S_client);
-	sq_close(S_server);
 
 	return 0;
 }

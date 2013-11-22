@@ -5,10 +5,12 @@ Like Space Station 13, but underwater.
 
 Libraries required to build:
 - SDL 1.2 - http://libsdl.org/
-- Squirrel 3.0 - http://squirrel-lang.org/
+- Lua 5.1 - http://lua.org/
 
 Libraries soon to be required:
 - ENet - http://enet.bespin.org/
+
+I *was* going to use Squirrel but then I found that it kinda sucked, so I'm going with Lua.
 
 SDL 2.0 support should be coming soon.
 

@@ -10,7 +10,9 @@
 #include <SDL.h>
 //include <enet/enet.h>
 
-#include <squirrel.h>
+#include <lua.h>
+#include <lualib.h>
+#include <lauxlib.h>
 
 #include <signal.h>
 
@@ -96,18 +98,17 @@ typedef struct map
 // file.c
 char *file_get_direct(const char *fname, int *len);
 char *file_get(const char *fname, int *len);
-int hsq_compile(HSQUIRRELVM S, const char *fname);
 
 // map.c
 void cell_reset_gas(cell_t *c);
 void map_tick_atmos(map_t *map);
 
 // sq.c
-SQInteger fsq_turf_get_gas(HSQUIRRELVM S);
-SQInteger fsq_turf_set_gas(HSQUIRRELVM S);
-SQInteger fsq_turf_reset_gas(HSQUIRRELVM S);
-SQInteger fsq_turf_set_type(HSQUIRRELVM S);
-SQInteger fsq_map_new(HSQUIRRELVM S);
+int fl_turf_get_gas(lua_State *L);
+int fl_turf_set_gas(lua_State *L);
+int fl_turf_reset_gas(lua_State *L);
+int fl_turf_set_type(lua_State *L);
+int fl_map_new(lua_State *L);
 
 // main.c
 
