@@ -57,23 +57,47 @@ enum
 {
 	UD_INVALID = 0,
 
+	UD_LOADING, // special type to indicate file is being fetched
+
 	UD_MAP,
+	UD_IMG,
+};
+
+enum
+{
+	FMT_INVALID = 0,
+
+	FMT_IMG_RAW,
+	FMT_IMG_PNG,
+};
+
+typedef struct loading loading_t;
+typedef struct ud ud_t;
+
+struct loading
+{
+	int ud; /// userdata type
+	void *v; /// pointer to actual data
+	int dlen, alen; /// data length, allocated length
+
+	int fmt; /// file format
+	ud_t *p, *n; /// previous/next ud_t blocks in chain
+	const char *fname; /// name of file
+	int resid; /// resource ID (sanity check)
+};
+
+struct ud
+{
+	int ud; /// userdata type
+	void *v; /// pointer to actual data
+	int dlen, alen; /// data length, allocated length
 };
 
 typedef struct img
 {
-	int ud;
 	int w, h;
-	uint32_t *data;
+	uint32_t data[];
 } img_t;
-
-typedef struct sprite
-{
-	int ud;
-	img_t *img;
-	int tx, ty;
-	int tw, th;
-} sprite_t;
 
 typedef struct turf
 {
@@ -90,7 +114,6 @@ struct cell
 
 typedef struct map
 {
-	int ud;
 	int w, h;
 	cell_t c[];
 } map_t;
@@ -99,16 +122,26 @@ typedef struct map
 char *file_get_direct(const char *fname, int *len);
 char *file_get(const char *fname, int *len);
 
-// map.c
-void cell_reset_gas(cell_t *c);
-void map_tick_atmos(map_t *map);
+// img.c
+void img_free(img_t *img);
+img_t *img_new(int w, int h);
+img_t *img_new_ud(lua_State *L, int w, int h);
 
-// sq.c
+// lua.c / lua_*.c
+ud_t *ud_get_block(lua_State *L, int typ, char *tname, int idx);
+int fl_img_new(lua_State *L);
+int fl_map_new(lua_State *L);
 int fl_turf_get_gas(lua_State *L);
 int fl_turf_set_gas(lua_State *L);
 int fl_turf_reset_gas(lua_State *L);
 int fl_turf_set_type(lua_State *L);
-int fl_map_new(lua_State *L);
+
+// map.c
+void cell_reset_gas(cell_t *c);
+void map_free(map_t *map);
+map_t *map_new(int w, int h);
+map_t *map_new_ud(lua_State *L, int w, int h);
+void map_tick_atmos(map_t *map);
 
 // main.c
 

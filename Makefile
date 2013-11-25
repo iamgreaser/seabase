@@ -4,9 +4,11 @@ SRCDIR = src
 INCLUDES = src/common.h
 OBJS = \
 	$(OBJDIR)/file.o \
-	$(OBJDIR)/map.o \
+	$(OBJDIR)/img.o \
 	$(OBJDIR)/lua.o \
 	$(OBJDIR)/lua_turf.o \
+	$(OBJDIR)/map.o \
+	\
 	$(OBJDIR)/main.o
 
 CFLAGS = -g -O2 `sdl-config --cflags`

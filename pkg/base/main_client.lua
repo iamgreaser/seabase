@@ -67,6 +67,9 @@ wall_list = {}
 
 -- Lua is 1-based. Ugh. But we'll cope.
 print(#test_map, #(test_map[1]))
+smap = common.map_new(100, 100)
+print(smap)
+smap = nil
 map = common.map_new(#test_map, #(test_map[1]))
 
 local x,y

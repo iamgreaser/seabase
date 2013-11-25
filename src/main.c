@@ -75,6 +75,9 @@ int main(int argc, const char *argv)
 		ADDFN_L(L_server, f, s);
 	lua_newtable(L_client);
 	lua_newtable(L_server);
+
+	ADDFN(fl_img_new, "img_new");
+
 	ADDFN(fl_map_new, "map_new");
 	ADDFN(fl_turf_set_type, "turf_set_type");
 	ADDFN(fl_turf_reset_gas, "turf_reset_gas");

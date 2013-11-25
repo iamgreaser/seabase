@@ -15,15 +15,14 @@ int fl_turf_get_gas(lua_State *L)
 	int top = lua_gettop(L);
 	if(top < 4) return luaL_error(L, "not enough arguments for turf_");
 
-	void *map_ud;
+	ud_t *map_ud;
 	int x, y, type;
-	map_ud = lua_touserdata(L, 1);
+	map_ud = ud_get_block(L, UD_MAP, "map", 1);
 	x = lua_tointeger(L, 2);
 	y = lua_tointeger(L, 3);
 	type = lua_tointeger(L, 4);
 
-	map_t *map = (map_t *)map_ud;
-	if(map->ud != UD_MAP) return luaL_error(L, "not a map");
+	map_t *map = (map_t *)(map_ud->v);
 	if(x < 1 || y < 1 || x > map->w || y > map->h)
 		return luaL_error(L, "invalid coords %d, %d", x, y);
 
@@ -49,17 +48,16 @@ int fl_turf_set_gas(lua_State *L)
 	int top = lua_gettop(L);
 	if(top < 5) return luaL_error(L, "not enough arguments for turf_");
 
-	void *map_ud;
+	ud_t *map_ud;
 	int x, y, type;
 	double val;
-	map_ud = lua_touserdata(L, 1);
+	map_ud = ud_get_block(L, UD_MAP, "map", 1);
 	x = lua_tointeger(L, 2);
 	y = lua_tointeger(L, 3);
 	type = lua_tointeger(L, 4);
 	val = lua_tonumber(L, 5);
 
-	map_t *map = (map_t *)map_ud;
-	if(map->ud != UD_MAP) return luaL_error(L, "not a map");
+	map_t *map = (map_t *)(map_ud->v);
 	if(x < 1 || y < 1 || x > map->w || y > map->h)
 		return luaL_error(L, "invalid coords %d, %d", x, y);
 
@@ -83,16 +81,15 @@ int fl_turf_set_gas(lua_State *L)
 int fl_turf_reset_gas(lua_State *L)
 {
 	int top = lua_gettop(L);
-	if(top < 3) return luaL_error(L, "not enough arguments for turf_");
+	if(top < 3) return luaL_error(L, "not enough arguments for turf_reset_gas");
 
-	void *map_ud;
+	ud_t *map_ud;
 	int x, y;
-	map_ud = lua_touserdata(L, 1);
+	map_ud = ud_get_block(L, UD_MAP, "map", 1);
 	x = lua_tointeger(L, 2);
 	y = lua_tointeger(L, 3);
 
-	map_t *map = (map_t *)map_ud;
-	if(map->ud != UD_MAP) return luaL_error(L, "not a map");
+	map_t *map = (map_t *)(map_ud->v);
 	if(x < 1 || y < 1 || x > map->w || y > map->h)
 		return luaL_error(L, "invalid coords %d, %d", x, y);
 
@@ -116,15 +113,14 @@ int fl_turf_set_type(lua_State *L)
 	int top = lua_gettop(L);
 	if(top < 4) return luaL_error(L, "not enough arguments for turf_set_type");
 
-	void *map_ud;
+	ud_t *map_ud;
 	int x, y, type;
-	map_ud = lua_touserdata(L, 1);
+	map_ud = ud_get_block(L, UD_MAP, "map", 1);
 	x = lua_tointeger(L, 2);
 	y = lua_tointeger(L, 3);
 	type = lua_tointeger(L, 4);
 
-	map_t *map = (map_t *)map_ud;
-	if(map->ud != UD_MAP) return luaL_error(L, "not a map");
+	map_t *map = (map_t *)(map_ud->v);
 	if(x < 1 || y < 1 || x > map->w || y > map->h)
 		return luaL_error(L, "invalid coords %d, %d", x, y);
 

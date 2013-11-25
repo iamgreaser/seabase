@@ -28,6 +28,83 @@ void cell_reset_gas(cell_t *c)
 	}
 }
 
+/**
+	\brief Frees a map.
+
+	\param map Map to free.
+*/
+void map_free(map_t *map)
+{
+	free((void *)map);
+}
+
+int map_free_gc(lua_State *L)
+{
+	ud_t *ud = lua_touserdata(L, 1);
+	printf("Freeing map %p\n", ud);
+	map_free((map_t *)(ud->v));
+}
+
+/**
+	\brief Creates a new map.
+
+	\param w Width of map.
+	\param h Height of map.
+
+	\return New map.
+*/
+map_t *map_new(int w, int h)
+{
+	int i;
+	int dsize = (sizeof(map_t) + sizeof(cell_t)*w*h);
+
+	map_t *map = malloc(dsize);
+	map->w = w;
+	map->h = h;
+
+	// Initialise map data
+	for(i = 0; i < w*h; i++)
+	{
+		cell_t *c = &(map->c[i]);
+		c->turf.type = TURF_WATER;
+		cell_reset_gas(c);
+	}
+
+	return map;
+}
+
+/**
+	\brief Creates a new map with a userdata block.
+
+	\param L Lua state.
+	\param w Width of map.
+	\param h Height of map.
+
+	\return New map, with userdata block pushed onto Lua stack.
+*/
+map_t *map_new_ud(lua_State *L, int w, int h)
+{
+	int dsize = (sizeof(map_t) + sizeof(cell_t)*w*h);
+
+	map_t *map = map_new(w, h);
+	ud_t *ud = lua_newuserdata(L, sizeof(ud_t));
+	ud->ud = UD_MAP;
+	ud->v = (void *)map;
+	ud->dlen = ud->alen = dsize;
+
+	lua_newtable(L);
+	lua_pushcfunction(L, map_free_gc);
+	lua_setfield(L, -2, "__gc");
+	lua_setmetatable(L, -2);
+
+	return map;
+}
+
+/**
+	\brief Perform an atmospherics simulation tick.
+
+	\param map Map to operate on.
+*/
 void map_tick_atmos(map_t *map)
 {
 	//
