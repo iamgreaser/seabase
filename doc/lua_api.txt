@@ -1,0 +1,71 @@
+Everything is garbage collected. If you feel you are leaking RAM horribly, call collectgarbage() for a full GC sweep.
+
+Filenames can only contain the following characters:
+	-./0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ_abcdefghijklmnopqrstuvwxyz
+Furthermore, filenames cannot contain two periods in a row (that is, "..").
+The directory separator is a forward slash ("/"). This is to ensure cross-platform portability, and to serve as a reminder that Windows is a pile of shit and that you should be using a Unix-based system instead.
+
+The following directories have the following meanings:
+* pkg/ - Remote on client, local on server, read-only ("packages").
+* clsave/pub/ - Client only, local, read-only ("public").
+* clsave/vol/ - Client only, local, read-write ("volatile").
+* svsave/pub/ - Server only, local, read-only ("public").
+* svsave/vol/ - Server only, local, read-write ("volatile").
+* anything that doesn't start with these - NO ACCESS WHATSOEVER.
+
+If the server attempts to load something that it has no access to, a Lua error will be thrown.
+If the client attempts to load something that isn't local, it will try to fetch it from the server.
+BE VERY WARY OF THIS, because if you aren't, a dodgy client can Lua-crash the server.
+
+There are 3 tables you need to be aware of. They are:
+* common - Appears on both client and server.
+* client - Client only, contains copy of common's contents.
+* server - Server only, contains copy of common's contents.
+
+The Lua manual will be useful! It's available here:
+	http://lua.org/manual/5.1/
+
+The following libraries are available (TODO: confine it to this):
+* base library
+* coroutine
+* math
+* string
+* table
+
+The following functions are wrapped (TODO: actually do this):
+* dofile(fname) -> return loadfile(fname)()
+* loadfile(fname) -> return common.fetch("lua", fname)
+* loadstring(str) will forbid Lua bytecode from being executed.
+
+#
+# Image handling
+#
+img = common.img_new(w, h):
+	Creates a new, blank image.
+
+#
+# Map handling
+#
+map = common.map_new(w, h):
+	Creates a new map used for atmospheric simulation.
+
+#
+# Turf handling
+#
+Turf type constants (see src/common.h):
+	TURF_WATER    = 0: Nothing but water above and below. Can enter.
+	TURF_FLOOR    = 1: Top and bottom protected. Can enter.
+	TURF_WALL     = 2: Cannot enter. Water/gas cannot flow.
+
+common.turf_set_type(map, x, y, type):
+	Sets the turf type for a given map cell.
+
+common.turf_reset_gas(map, x, y):
+	Resets the gas levels to a type-dependent default for a turf.
+
+val = common.turf_get_gas(map, x, y, type):
+	Gets the amount of a type of gas/liquid in a given cell.
+
+common.turf_set_gas(map, x, y, type, val):
+	Sets the amount of a type of gas/liquid in a given cell.
+

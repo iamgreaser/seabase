@@ -43,6 +43,47 @@ uint8_t dithtab4[16] = {
 	0xF, 0x7, 0xD, 0x5,
 };
 
+/**
+	\brief Lua: wrapped dofile
+
+	\param fname
+
+	\return Result of argumentless call to function loaded by loadfile.
+*/
+int fl_wrap_dofile(lua_State *L)
+{
+	int top = lua_gettop(L);
+	if(top < 1) return luaL_error(L, "not enough arguments for dofile");
+
+	lua_getglobal(L, "loadfile");
+	lua_pushvalue(L, 1);
+	lua_call(L, 1, 1);
+	lua_call(L, 0, LUA_MULTRET);
+
+	int ntop = lua_gettop(L);
+	return ntop - top;
+}
+
+/**
+	\brief Loads properly wrapped base Lua libraries.
+
+	\param L Lua state.
+*/
+void open_libs_lua(lua_State *L)
+{
+	// Load libraries
+	lua_pushcfunction(L, luaopen_base); lua_call(L, 0, 0);
+	//lua_pushcfunction(L, luaopen_coroutine); lua_call(L, 0, 0); // Apparently in the base library.
+	lua_pushcfunction(L, luaopen_math); lua_call(L, 0, 0);
+	lua_pushcfunction(L, luaopen_string); lua_call(L, 0, 0);
+	lua_pushcfunction(L, luaopen_table); lua_call(L, 0, 0);
+
+	// Wrap certain functions
+	// TODO: loadfile(fname) -> return common.fetch("lua", fname)
+	// TODO: forbid bytecode in loadstring(s)
+	lua_pushcfunction(L, fl_wrap_dofile); lua_setglobal(L, "dofile");
+}
+
 int main(int argc, const char *argv)
 {
 	SDL_Init(SDL_INIT_TIMER | SDL_INIT_VIDEO | SDL_INIT_NOPARACHUTE);
@@ -56,8 +97,8 @@ int main(int argc, const char *argv)
 
 	// TODO: restrict the libraries loaded to a subset
 	printf("Loading functions\n");
-	luaL_openlibs(L_server);
-	luaL_openlibs(L_client);
+	open_libs_lua(L_server);
+	open_libs_lua(L_client);
 
 #define ADDFN_L(L, f, s) \
 		lua_pushcfunction(L, f); \

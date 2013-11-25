@@ -35,7 +35,7 @@ int fl_turf_get_gas(lua_State *L)
 }
 
 /**
-	\brief SQ: Sets a gas/liquid type for a cell.
+	\brief Lua: Sets a gas/liquid type for a cell.
 
 	\param map
 	\param x
@@ -72,7 +72,7 @@ int fl_turf_set_gas(lua_State *L)
 
 
 /**
-	\brief SQ: Resets the gas levels to defaults for a turf.
+	\brief Lua: Resets the gas levels to defaults for a turf.
 
 	\param map
 	\param x
@@ -101,7 +101,7 @@ int fl_turf_reset_gas(lua_State *L)
 }
 
 /**
-	\brief SQ: Sets the turf type for a map.
+	\brief Lua: Sets the turf type for a given map cell.
 
 	\param map
 	\param x
