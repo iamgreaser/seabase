@@ -176,7 +176,7 @@ img_t *img_load_png(const char *data, int len)
 
 			// we're not loading PNG files all the time
 			// so it's a good time to rank purity over speed
-			for(x = 0; x < img_h; x++)
+			for(x = 0; x < img_w; x++)
 			{
 				for(i = 0; i < 4; i++)
 				{
