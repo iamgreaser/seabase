@@ -6,6 +6,7 @@ Like Space Station 13, but underwater.
 Libraries required to build:
 - SDL 1.2 - http://libsdl.org/
 - Lua 5.1 - http://lua.org/
+- zlib - http://zlib.net/
 
 Libraries soon to be required:
 - ENet - http://enet.bespin.org/

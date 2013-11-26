@@ -43,7 +43,8 @@ char *file_get_direct(const char *fname, int *len)
 
 			buf = realloc(buf, buflen);
 		} else {
-			fcount--; // I don't know why I have to do this, I just do.
+			//fcount--; // I don't know why I have to do this, I just do.
+			// Turns out doing that makes it break.
 			//printf("%i %i\n", bufoffs, fcount);
 			*len = bufoffs + fcount;
 			buf[*len] = '\x00';

@@ -86,6 +86,11 @@ void open_libs_lua(lua_State *L)
 
 int main(int argc, const char *argv)
 {
+	char *data;
+	int len;
+	data = file_get_direct("pkg/base/gfx/hello.png", &len);
+	img_load_png(data, len);
+	
 	SDL_Init(SDL_INIT_TIMER | SDL_INIT_VIDEO | SDL_INIT_NOPARACHUTE);
 	atexit(SDL_Quit);
 

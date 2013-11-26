@@ -41,19 +41,16 @@ img_t *img_new(int w, int h)
 }
 
 /**
-	\brief Creates a new image with a userdata block.
+	\brief Creates a userdata block for an image.
 
 	\param L Lua state.
-	\param w Width of image.
-	\param h Height of image.
+	\param img Image.
 
-	\return New image, with userdata block pushed onto Lua stack.
+	\return Userdata block as pushed onto the Lua stack.
 */
-img_t *img_new_ud(lua_State *L, int w, int h)
+ud_t *img_provide_ud(lua_State *L, img_t *img)
 {
-	int dsize = (sizeof(img_t) + sizeof(uint32_t)*w*h);
-
-	img_t *img = img_new(w, h);
+	int dsize = (sizeof(img_t) + sizeof(uint32_t) * (img->w) * (img->h));
 
 	ud_t *ud = lua_newuserdata(L, sizeof(ud_t));
 	ud->ud = UD_IMG;
@@ -65,7 +62,24 @@ img_t *img_new_ud(lua_State *L, int w, int h)
 	lua_setfield(L, -2, "__gc");
 	lua_setmetatable(L, -2);
 
-	return img;
+	return ud;
 }
 
+/**
+	\brief Creates a new image with a userdata block.
+
+	\param L Lua state.
+	\param w Width of image.
+	\param h Height of image.
+
+	\return New image, with userdata block pushed onto Lua stack.
+*/
+img_t *img_new_ud(lua_State *L, int w, int h)
+{
+	img_t *img = img_new(w, h);
+
+	img_provide_ud(L, img);
+
+	return img;
+}
 

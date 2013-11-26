@@ -16,6 +16,11 @@
 
 #include <signal.h>
 
+#include <zlib.h>
+
+// for ntohs/ntohl
+#include <netinet/in.h>
+
 #define D_E 0x01
 #define D_S 0x02
 #define D_W 0x04
@@ -125,6 +130,7 @@ char *file_get(const char *fname, int *len);
 // img.c
 void img_free(img_t *img);
 img_t *img_new(int w, int h);
+ud_t *img_provide_ud(lua_State *L, img_t *img);
 img_t *img_new_ud(lua_State *L, int w, int h);
 
 // lua.c / lua_*.c

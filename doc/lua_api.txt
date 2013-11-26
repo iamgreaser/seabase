@@ -38,11 +38,34 @@ The following functions are wrapped (TODO: actually do this):
 * load(func) will forbid Lua bytecode from being executed.
 * loadstring(str) will forbid Lua bytecode from being executed.
 
+common.fetch() returns instantly, even for files which need to be loaded from the server.
+However, attempting to use the objects before they are loaded will block unless otherwise noted.
+
+#
+# File handling
+#
+Formats:
+	"png": PNG image
+	"lua": Lua script
+
+obj = common.fetch(fmt, fname):
+	### NOT IMPLEMENTED ###
+	Loads a file of a given format and returns the correct object.
+
+common.block(obj):
+	### NOT IMPLEMENTED ###
+	Blocks execution until obj is fully loaded.
+	Returns an error if obj failed to load properly.
+
 #
 # Image handling
 #
 img = common.img_new(w, h):
 	Creates a new, blank image.
+
+img = common.img_load(fname, fmt="png"):
+	Loads an image from a file.
+	Throws a Lua error on failure.
 
 #
 # Map handling

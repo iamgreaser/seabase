@@ -8,12 +8,13 @@ OBJS = \
 	$(OBJDIR)/lua.o \
 	$(OBJDIR)/lua_turf.o \
 	$(OBJDIR)/map.o \
+	$(OBJDIR)/png.o \
 	\
 	$(OBJDIR)/main.o
 
 CFLAGS = -g -O2 `sdl-config --cflags`
 LDFLAGS = -g
-LIBS = -lm `sdl-config --libs` -llua-5.1
+LIBS = -lm `sdl-config --libs` -llua-5.1 -lz
 
 BINNAME = seabase
 
