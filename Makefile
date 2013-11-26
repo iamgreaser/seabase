@@ -7,6 +7,8 @@ OBJS = \
 	$(OBJDIR)/file.o \
 	$(OBJDIR)/img.o \
 	$(OBJDIR)/lua.o \
+	$(OBJDIR)/lua_img.o \
+	$(OBJDIR)/lua_map.o \
 	$(OBJDIR)/lua_turf.o \
 	$(OBJDIR)/map.o \
 	$(OBJDIR)/png.o \
