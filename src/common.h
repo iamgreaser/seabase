@@ -6,6 +6,7 @@
 
 #include <math.h>
 #include <time.h>
+#include <sys/time.h>
 
 #include <SDL.h>
 //include <enet/enet.h>

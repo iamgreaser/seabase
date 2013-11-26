@@ -10,6 +10,7 @@ lua_State *L_client;
 lua_State *L_server;
 map_t *map_client = NULL;
 map_t *map_server = NULL;
+int64_t time_current, time_prev;
 
 int bubcount = 0;
 
@@ -43,6 +44,25 @@ uint8_t dithtab4[16] = {
 	0x3, 0xB, 0x1, 0x9,
 	0xF, 0x7, 0xD, 0x5,
 };
+
+/**
+	\brief Get the current time in microseconds.
+
+	\return Current time in microseconds.
+*/
+int64_t time_get_us(void)
+{
+	// TODO: Microsoft Make-it-hard-for-everyone-else-dows version
+	struct timeval tv;
+	gettimeofday(&tv, NULL);
+
+	int64_t s = (int64_t)tv.tv_sec;
+	int64_t u = (int64_t)tv.tv_usec;
+	s *= (int64_t)1000000;
+	u += s;
+
+	return u;
+}
 
 /**
 	\brief Lua: wrapped dofile
@@ -88,6 +108,8 @@ int main(int argc, const char *argv[])
 {
 	(void)argc;
 	(void)argv;
+
+	time_current = time_prev = time_get_us();
 
 	SDL_Init(SDL_INIT_TIMER | SDL_INIT_VIDEO | SDL_INIT_NOPARACHUTE);
 	atexit(SDL_Quit);
@@ -159,13 +181,16 @@ int main(int argc, const char *argv[])
 		// clear screen
 		memset(screen->pixels, 0, screen->pitch*screen->h);
 
+		// update timer
+		time_prev = time_current;
+		time_current = time_get_us();
+
 		// TODO: use pcall
 		lua_getglobal(L_client, "hook_tick");
-		// TODO: give actual times
 		if(!lua_isnil(L_client, -1))
 		{
-			lua_pushnumber(L_client, 0.0);
-			lua_pushnumber(L_client, 0.0);
+			lua_pushnumber(L_client, ((double)time_current)/1000000.0);
+			lua_pushnumber(L_client, ((double)(time_current - time_prev))/1000000.0);
 			lua_call(L_client, 2, 0);
 		} else {
 			printf("hook_tick DNE\n");
@@ -219,11 +244,10 @@ int main(int argc, const char *argv[])
 
 		// TODO: use pcall
 		lua_getglobal(L_client, "hook_render");
-		// TODO: give actual times
 		if(!lua_isnil(L_client, -1))
 		{
-			lua_pushnumber(L_client, 0.0);
-			lua_pushnumber(L_client, 0.0);
+			lua_pushnumber(L_client, ((double)time_current)/1000000.0);
+			lua_pushnumber(L_client, ((double)(time_current - time_prev))/1000000.0);
 			lua_call(L_client, 2, 0);
 		} else {
 			printf("hook_render DNE\n");
