@@ -19,9 +19,6 @@ OK, porting to Lua because fuck Squirrel.
 ]]
 
 local test_map = {
-	"                    ",
-	"                    ",
-	"                    ",
 	"     ####           ",
 	"     #..#           ",
 	"     #..#           ",
@@ -35,10 +32,6 @@ local test_map = {
 	"   #......#         ",
 	"   #......#         ",
 	"   ########         ",
-	"                    ",
-	"                    ",
-	"                    ",
-	"                    ",
 }
 
 TURF = {
@@ -66,11 +59,8 @@ test_map_trn = {
 wall_list = {}
 
 -- Lua is 1-based. Ugh. But we'll cope.
-print(#test_map, #(test_map[1]))
-smap = common.map_new(100, 100)
-print(smap)
-smap = nil
-map = common.map_new(#test_map, #(test_map[1]))
+print(#(test_map[1]), #test_map)
+map = common.map_new(#(test_map[1]), #test_map)
 
 local x,y
 for y=1,#test_map do

@@ -4,6 +4,7 @@ i'll sort out the licensing crap when i get around to it --GM
 
 #include "common.h"
 
+SDL_Surface *real_screen;
 SDL_Surface *screen;
 lua_State *L_client;
 lua_State *L_server;
@@ -12,7 +13,7 @@ map_t *map_server = NULL;
 
 int bubcount = 0;
 
-/**
+/*
 	// brief Simple stdout print function for the Squirrel VM.
 	Might be useful later?
 */
@@ -73,14 +74,13 @@ void open_libs_lua(lua_State *L)
 {
 	// Load libraries
 	lua_pushcfunction(L, luaopen_base); lua_call(L, 0, 0);
-	//lua_pushcfunction(L, luaopen_coroutine); lua_call(L, 0, 0); // Apparently in the base library.
 	lua_pushcfunction(L, luaopen_math); lua_call(L, 0, 0);
 	lua_pushcfunction(L, luaopen_string); lua_call(L, 0, 0);
 	lua_pushcfunction(L, luaopen_table); lua_call(L, 0, 0);
 
 	// Wrap certain functions
 	// TODO: loadfile(fname) -> return common.fetch("lua", fname)
-	// TODO: forbid bytecode in loadstring(s)
+	// TODO: forbid bytecode in loadstring(s) / load(fn[, chunkname])
 	lua_pushcfunction(L, fl_wrap_dofile); lua_setglobal(L, "dofile");
 }
 
@@ -132,7 +132,9 @@ int main(int argc, const char *argv)
 	printf("Functions loaded\n");
 
 	SDL_WM_SetCaption("Sea Base Omega - 0.0 prealpha", NULL);
-	screen = SDL_SetVideoMode(800, 600, 32, 0);
+	real_screen = SDL_SetVideoMode(960, 600, 32, 0);
+	screen = SDL_CreateRGBSurface(SDL_SWSURFACE, 320, 200, 32,
+		0x000000FF, 0x0000FF00, 0x00FF0000, 0xFF000000);
 
 	if(luaL_loadfile(L_client, "pkg/base/main_client.lua") == 0)
 	{
@@ -165,13 +167,13 @@ int main(int argc, const char *argv)
 		if(map_client != NULL)
 		{
 			map_tick_atmos(map_client);
-			for(y = 0; y < map_client->h && y < 18; y++)
-			for(x = 0; x < map_client->w && x < 25; x++)
+			for(y = 0; y < map_client->h && y < 12; y++)
+			for(x = 0; x < map_client->w && x < 20; x++)
 			{
 				uint32_t *p;
 				int sx, sy;
 
-				cell_t *c = &(map_client->c[y*map_client->h + x]);
+				cell_t *c = &(map_client->c[y*map_client->w + x]);
 				uint32_t v = 0xFFFF00FF;
 
 				switch(c->turf.type)
@@ -189,13 +191,13 @@ int main(int argc, const char *argv)
 				}
 				v = (((int)(c->gas.g.o2*255))<<8) | (((int)(c->gas.g.n2*255))<<16) | 0xFF000000;
 
-				for(sy = 0; sy < 32; sy++)
+				for(sy = 0; sy < 16; sy++)
 				{
-					p = (uint32_t *)(screen->pixels + (y*32+sy)*screen->pitch);
-					p += x*32;
-					for(sx = 0; sx < 32; sx++)
+					p = (uint32_t *)(screen->pixels + (y*16+sy)*screen->pitch);
+					p += x*16;
+					for(sx = 0; sx < 16; sx++)
 					{
-						int dtidx = ((sx>>1)&3)|(((sy>>1)&3)<<2);
+						int dtidx = ((sx)&3)|(((sy)&3)<<2);
 						dtidx = (dtidx+(bubcount>>3))&15;
 						*(p++) = (c->gas.g.water*16.0f - 0.5f > dithtab4[dtidx]
 							? 0x000000FF
@@ -204,7 +206,24 @@ int main(int argc, const char *argv)
 				}
 			}
 		}
-		SDL_Flip(screen);
+
+		// manual 3x upscaling of image
+		for(y = 0; y < 200; y++)
+		{
+			uint32_t *d0 = (uint32_t *)(real_screen->pixels + (y*3+0)*real_screen->pitch);
+			uint32_t *d1 = (uint32_t *)(real_screen->pixels + (y*3+1)*real_screen->pitch);
+			uint32_t *d2 = (uint32_t *)(real_screen->pixels + (y*3+2)*real_screen->pitch);
+			uint32_t *s = (uint32_t *)(screen->pixels + y*screen->pitch);
+
+			for(x = 0; x < 320; x++)
+			{
+				*(d0++) = *(d1++) = *(d2++) = *s;
+				*(d0++) = *(d1++) = *(d2++) = *s;
+				*(d0++) = *(d1++) = *(d2++) = *(s++);
+			}
+		}
+
+		SDL_Flip(real_screen);
 
 		SDL_Delay(10);
 
