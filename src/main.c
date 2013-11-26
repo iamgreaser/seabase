@@ -125,6 +125,7 @@ int main(int argc, const char *argv[])
 	ADDFN(fl_img_blit, "img_blit");
 
 	ADDFN(fl_map_new, "map_new");
+	ADDFN(fl_turf_get_type, "turf_get_type");
 	ADDFN(fl_turf_set_type, "turf_set_type");
 	ADDFN(fl_turf_reset_gas, "turf_reset_gas");
 	ADDFN(fl_turf_get_gas, "turf_get_gas");
@@ -155,6 +156,7 @@ int main(int argc, const char *argv[])
 	while(!quitflag)
 	{
 		int x, y;
+		// clear screen
 		memset(screen->pixels, 0, screen->pitch*screen->h);
 
 		// TODO: use pcall
@@ -173,6 +175,7 @@ int main(int argc, const char *argv[])
 		if(map_client != NULL)
 		{
 			map_tick_atmos(map_client);
+			/*
 			for(y = 0; y < map_client->h && y < 12; y++)
 			for(x = 0; x < map_client->w && x < 20; x++)
 			{
@@ -211,6 +214,7 @@ int main(int argc, const char *argv[])
 					}
 				}
 			}
+			*/
 		}
 
 		// TODO: use pcall

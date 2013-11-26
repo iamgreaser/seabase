@@ -171,6 +171,7 @@ int fl_map_new(lua_State *L);
 int fl_turf_get_gas(lua_State *L);
 int fl_turf_set_gas(lua_State *L);
 int fl_turf_reset_gas(lua_State *L);
+int fl_turf_get_type(lua_State *L);
 int fl_turf_set_type(lua_State *L);
 
 // map.c

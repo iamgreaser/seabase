@@ -101,6 +101,36 @@ int fl_turf_reset_gas(lua_State *L)
 }
 
 /**
+	\brief Lua: Gets the turf type for a given map cell.
+
+	\param map
+	\param x
+	\param y
+
+	\return Turf type as defined by the TURF_* constants.
+*/
+int fl_turf_get_type(lua_State *L)
+{
+	int top = lua_gettop(L);
+	if(top < 3) return luaL_error(L, "not enough arguments for turf_get_type");
+
+	ud_t *map_ud;
+	int x, y;
+	map_ud = ud_get_block(L, UD_MAP, "map", 1);
+	x = lua_tointeger(L, 2);
+	y = lua_tointeger(L, 3);
+
+	map_t *map = (map_t *)(map_ud->v);
+	if(x < 1 || y < 1 || x > map->w || y > map->h)
+		return luaL_error(L, "invalid coords %d, %d", x, y);
+
+	x--; y--;
+	int mi = y*map->w + x;
+	lua_pushinteger(L, map->c[mi].turf.type);
+	return 1;
+}
+
+/**
 	\brief Lua: Sets the turf type for a given map cell.
 
 	\param map

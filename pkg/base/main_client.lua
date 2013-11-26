@@ -99,8 +99,35 @@ y = wall_list[deadwall][2]
 common.turf_set_type(map, x, y, TURF.FLOOR)
 
 function hook_render(sec_current, sec_delta)
-	common.img_blit(img_tiles, 0, 0, BF_AM_THRES)
-	-- TODO
+	local x,y
+
+	for y=1,#test_map do
+	for x=1,#(test_map[1]) do
+		local tx, ty
+		local typ = common.turf_get_type(map, x, y)
+		local water = common.turf_get_gas(map, x, y, GAS.WATER)
+		
+		if typ == TURF.WATER then
+			tx, ty = 0, 0
+		elseif typ == TURF.FLOOR then
+			tx, ty = 1, 0
+		elseif typ == TURF.WALL then
+			-- TODO: neighbouring cells
+			tx, ty = 0, 2
+			water = 0
+		end
+		water = math.max(0, math.min(1, water))
+		water = math.floor(water * 16 - 0.5)
+		if x ~= drain_x or y ~= drain_y then
+			common.img_blit(img_tiles, (x-1)*16, (y-1)*16, BF_AM_THRES,
+				16*tx, 16*ty, 16, 16)
+		end
+		if water >= 0 then
+			common.img_blit(img_tiles, (x-1)*16, (y-1)*16, BF_AM_THRES,
+				16*water, 16*1, 16, 16)
+		end
+	end
+	end
 end
 
 function hook_tick(sec_current, sec_delta)

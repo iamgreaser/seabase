@@ -111,6 +111,9 @@ Turf type constants (see src/common.h):
 	TURF_FLOOR    = 1: Top and bottom protected. Can enter.
 	TURF_WALL     = 2: Cannot enter. Water/gas cannot flow.
 
+type = common.turf_get_type(map, x, y):
+	Gets the turf type for a given map cell.
+
 common.turf_set_type(map, x, y, type):
 	Sets the turf type for a given map cell.
 
