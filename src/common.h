@@ -26,6 +26,12 @@
 #define D_W 0x04
 #define D_N 0x08
 
+#define BF_M_AMODE  0x00000003
+#define BF_AM_DIRECT   0x00000000
+#define BF_AM_THRES    0x00000001
+#define BF_AM_BLEND    0x00000002
+#define BF_AM_DITHER   0x00000003
+
 #define GAS_COUNT 5
 typedef union gasmix
 {
@@ -63,6 +69,7 @@ enum
 	UD_INVALID = 0,
 
 	UD_LOADING, // special type to indicate file is being fetched
+	UD_FAILED, // special type to indicate loading failed
 
 	UD_MAP,
 	UD_IMG,
@@ -123,6 +130,28 @@ typedef struct map
 	cell_t c[];
 } map_t;
 
+// blit.c
+void blit_raw(
+	uint32_t *sd, int sw, int sp, int sh, int sx, int sy,
+	uint32_t *dd, int dw, int dp, int dh, int dx, int dy,
+	int bw, int bh, int flags);
+void blit_img_to_img(
+	img_t *sd, int sx, int sy,
+	img_t *dd, int dx, int dy,
+	int bw, int bh, int flags);
+void blit_img_to_sdl(
+	img_t *sd, int sx, int sy,
+	SDL_Surface *dd, int dx, int dy,
+	int bw, int bh, int flags);
+void blit_sdl_to_img(
+	SDL_Surface *sd, int sx, int sy,
+	img_t *dd, int dx, int dy,
+	int bw, int bh, int flags);
+void blit_sdl_to_sdl(
+	SDL_Surface *sd, int sx, int sy,
+	SDL_Surface *dd, int dx, int dy,
+	int bw, int bh, int flags);
+
 // file.c
 char *file_get_direct(const char *fname, int *len);
 char *file_get(const char *fname, int *len);
@@ -136,6 +165,8 @@ img_t *img_new_ud(lua_State *L, int w, int h);
 // lua.c / lua_*.c
 ud_t *ud_get_block(lua_State *L, int typ, char *tname, int idx);
 int fl_img_new(lua_State *L);
+int fl_img_load(lua_State *L);
+int fl_img_blit(lua_State *L);
 int fl_map_new(lua_State *L);
 int fl_turf_get_gas(lua_State *L);
 int fl_turf_set_gas(lua_State *L);
@@ -153,4 +184,5 @@ void map_tick_atmos(map_t *map);
 img_t *img_load_png(const char *data, int len);
 
 // main.c
+extern SDL_Surface *screen;
 

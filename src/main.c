@@ -89,11 +89,6 @@ int main(int argc, const char *argv[])
 	(void)argc;
 	(void)argv;
 
-	char *data;
-	int len;
-	data = file_get_direct("pkg/base/gfx/hello.png", &len);
-	img_t *bimg = img_load_png(data, len);
-	
 	SDL_Init(SDL_INIT_TIMER | SDL_INIT_VIDEO | SDL_INIT_NOPARACHUTE);
 	atexit(SDL_Quit);
 
@@ -126,6 +121,8 @@ int main(int argc, const char *argv[])
 	lua_newtable(L_server);
 
 	ADDFN(fl_img_new, "img_new");
+	ADDFN(fl_img_load, "img_load");
+	ADDFN(fl_img_blit, "img_blit");
 
 	ADDFN(fl_map_new, "map_new");
 	ADDFN(fl_turf_set_type, "turf_set_type");
@@ -170,6 +167,7 @@ int main(int argc, const char *argv[])
 			lua_call(L_client, 2, 0);
 		} else {
 			printf("hook_tick DNE\n");
+			lua_pop(L_client, 1);
 		}
 
 		if(map_client != NULL)
@@ -215,6 +213,19 @@ int main(int argc, const char *argv[])
 			}
 		}
 
+		// TODO: use pcall
+		lua_getglobal(L_client, "hook_render");
+		// TODO: give actual times
+		if(!lua_isnil(L_client, -1))
+		{
+			lua_pushnumber(L_client, 0.0);
+			lua_pushnumber(L_client, 0.0);
+			lua_call(L_client, 2, 0);
+		} else {
+			printf("hook_render DNE\n");
+			lua_pop(L_client, 1);
+		}
+
 		// manual 3x upscaling of image
 		for(y = 0; y < 200; y++)
 		{
@@ -229,16 +240,6 @@ int main(int argc, const char *argv[])
 				*(d0++) = *(d1++) = *(d2++) = *s;
 				*(d0++) = *(d1++) = *(d2++) = *(s++);
 			}
-		}
-
-		// TEST: render test image
-		for(y = 0; y < bimg->h; y++)
-		for(x = 0; x < bimg->w; x++)
-		{
-			uint32_t *d = (uint32_t *)(real_screen->pixels + x*4 + y*real_screen->pitch);
-			uint32_t sv = bimg->data[x + y*bimg->w];
-			if(sv > 0x80000000U)
-				*d = sv;
 		}
 
 		SDL_Flip(real_screen);

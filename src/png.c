@@ -53,9 +53,17 @@ img_t *img_load_png(const char *data, int len)
 		uint32_t csum = ntohl(*(uint32_t *)cend);
 		uint32_t realcsum = crc32(0, (const Bytef *)(dfol - 4), (uInt)(clen + 4));
 
+		if(csum != realcsum)
+		{
+			fprintf(stderr, "img_load_png: checksum fail\n");
+			if(idat_buf != NULL) free(idat_buf);
+			return NULL;
+		}
+		/*
 		printf("%c%c%c%c: checksum %08X - calculated %08X\n"
 			, cname[0], cname[1], cname[2], cname[3]
 			, csum, realcsum);
+		*/
 
 		// Parse chunk
 		if(!memcmp(cname, "IEND", 4))

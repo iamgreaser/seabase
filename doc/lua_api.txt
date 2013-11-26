@@ -52,20 +52,50 @@ obj = common.fetch(fmt, fname):
 	### NOT IMPLEMENTED ###
 	Loads a file of a given format and returns the correct object.
 
-common.block(obj):
+result = common.is_loaded(obj):
+	### NOT IMPLEMENTED ###
+	Returns true if the object is fully loaded,
+	false if the object is NOT loaded,
+	and throws a Lua error on failure.
+
+result = common.is_failure(obj):
+	### NOT IMPLEMENTED ###
+	Returns true if obj failed to load,
+	and false otherwise (even if it is still loading).
+
+obj = common.block(obj):
 	### NOT IMPLEMENTED ###
 	Blocks execution until obj is fully loaded.
-	Returns an error if obj failed to load properly.
+	Throws an error if obj failed to load properly.
+	Returns the object you fed into it.
 
 #
 # Image handling
 #
+Blit flags:
+	BF_AM_DIRECT   = 0: Ignore alpha and just blit directly.
+	BF_AM_THRES    = 1: Skip pixels with < 0x80 alpha.
+	BF_AM_BLEND    = 2: Use proper alpha blending.
+	BF_AM_DITHER   = 3: Use positional dithering.
+
 img = common.img_new(w, h):
 	Creates a new, blank image.
 
 img = common.img_load(fname, fmt="png"):
 	Loads an image from a file.
 	Throws a Lua error on failure.
+
+w, h = common.img_get_dims(img):
+	Returns the dimensions of an image.
+
+common.img_blit(img, dx, dy, flags, sx=0, sy=0, sw=width, sh=height, dest=nil):
+	### NOT IMPLEMENTED ###
+	Blits an image to/from either the screen or another image.
+
+	If img is nil, blit from the screen.
+	If dest is nil, blit to the screen.
+
+	Note that blitting to/from the screen on the server will throw an error.
 
 #
 # Map handling

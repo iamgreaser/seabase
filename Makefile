@@ -3,6 +3,7 @@ SRCDIR = src
 
 INCLUDES = src/common.h
 OBJS = \
+	$(OBJDIR)/blit.o \
 	$(OBJDIR)/file.o \
 	$(OBJDIR)/img.o \
 	$(OBJDIR)/lua.o \

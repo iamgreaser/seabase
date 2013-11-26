@@ -17,6 +17,13 @@ OK, porting to Lua because fuck Squirrel.
 --GM
 
 ]]
+BF_M_AMODE  = 0x00000003
+BF_AM_DIRECT   = 0x00000000
+BF_AM_THRES    = 0x00000001
+BF_AM_BLEND    = 0x00000002
+BF_AM_DITHER   = 0x00000003
+
+img_tiles = common.img_load("pkg/base/gfx/hello.png")
 
 local test_map = {
 	"     ####           ",
@@ -90,6 +97,11 @@ local x,y
 x = wall_list[deadwall][1]
 y = wall_list[deadwall][2]
 common.turf_set_type(map, x, y, TURF.FLOOR)
+
+function hook_render(sec_current, sec_delta)
+	common.img_blit(img_tiles, 0, 0, BF_AM_THRES)
+	-- TODO
+end
 
 function hook_tick(sec_current, sec_delta)
 	poop = poop - 1
