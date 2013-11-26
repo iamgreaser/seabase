@@ -12,7 +12,7 @@ OBJS = \
 	\
 	$(OBJDIR)/main.o
 
-CFLAGS = -g -O2 `sdl-config --cflags`
+CFLAGS = -g -O2 `sdl-config --cflags` -Wall -Wextra
 LDFLAGS = -g
 LIBS = -lm `sdl-config --libs` -llua-5.1 -lz
 

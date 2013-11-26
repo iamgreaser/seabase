@@ -21,6 +21,12 @@ img_t *img_load_png(const char *data, int len)
 	const char *dfol = data + 8;
 	const char *dend = data + len;
 
+	int x, y, i;
+
+	int img_w = 0, img_h = 0;
+	int img_bpc = 0, img_ct = 0;
+	int img_cm = 0, img_fm = 0, img_im = 0;
+
 	for(;;)
 	{
 		// Get chunk region
@@ -51,16 +57,198 @@ img_t *img_load_png(const char *data, int len)
 			, cname[0], cname[1], cname[2], cname[3]
 			, csum, realcsum);
 
+		// Parse chunk
+		if(!memcmp(cname, "IEND", 4))
+		{
+			dfol = cend + 4;
+			break;
+
+		} else if(!memcmp(cname, "IHDR", 4)) {
+			if(clen != 13)
+			{
+				fprintf(stderr, "img_load_png: invalid IHDR length\n");
+				if(idat_buf != NULL) free(idat_buf);
+				return NULL;
+			}
+
+			img_w = (int)ntohl(*(uint32_t *)(dfol+0));
+			img_h = (int)ntohl(*(uint32_t *)(dfol+4));
+			img_bpc = (int)(uint8_t)dfol[8];
+			img_ct = (int)(uint8_t)dfol[9];
+			img_cm = (int)(uint8_t)dfol[10];
+			img_fm = (int)(uint8_t)dfol[11];
+			img_im = (int)(uint8_t)dfol[12];
+
+			// sanity checks
+			if(img_w <= 0 || img_h <= 0 || img_w > 32768 || img_h > 32768
+				|| img_w * img_h > (2<<26))
+			{
+				fprintf(stderr, "img_load_png: image too large or contains a 0 dimension\n");
+				if(idat_buf != NULL) free(idat_buf);
+				return NULL;
+			}
+
+			if(img_bpc != 8)
+			{
+				fprintf(stderr, "img_load_png: only 8bpc images supported\n");
+				if(idat_buf != NULL) free(idat_buf);
+				return NULL;
+			}
+
+			if(img_ct != 6)
+			{
+				fprintf(stderr, "img_load_png: only RGBA images supported\n");
+				if(idat_buf != NULL) free(idat_buf);
+				return NULL;
+			}
+
+			if(img_cm != 0)
+			{
+				fprintf(stderr, "img_load_png: invalid compression method\n");
+				if(idat_buf != NULL) free(idat_buf);
+				return NULL;
+			}
+
+			if(img_im != 0)
+			{
+				fprintf(stderr, "img_load_png: interlacing not supported\n");
+				if(idat_buf != NULL) free(idat_buf);
+				return NULL;
+			}
+
+			if(img_fm != 0)
+			{
+				fprintf(stderr, "img_load_png: invalid filter method\n");
+				if(idat_buf != NULL) free(idat_buf);
+				return NULL;
+			}
+
+		} else if(!memcmp(cname, "IDAT", 4)) {
+			// Concatenate
+			idat_buf = realloc(idat_buf, idat_len + clen);
+			memcpy(idat_buf + idat_len, dfol, clen);
+			idat_len += clen;
+
+		} else if(!(cname[0] & 0x20)) {
+			fprintf(stderr, "img_load_png: unhandled critical chunk %c%c%c%c\n"
+				, cname[0], cname[1], cname[2], cname[3]);
+			if(idat_buf != NULL) free(idat_buf);
+			return NULL;
+		}
+
 		dfol = cend + 4;
 
-		if(!memcmp(cname, "IEND", 4))
-			break;
 	}
 
 	if(dend - dfol > 0)
 		fprintf(stderr, "img_load_png: warning: excess garbage in PNG file\n");
 
 	// TODO - create actual image
-	return NULL;
+	if(idat_buf == NULL)
+	{
+		fprintf(stderr, "img_load_png: no IDAT chunks in image\n");
+		return NULL;
+	} else {
+		int unsize = (img_w*4+1)*img_h;
+		uint8_t *unpackbuf = malloc(unsize);
+		uLongf unlen = (uLongf)unsize;
+
+		if(uncompress((Bytef *)unpackbuf, &unlen, (Bytef *)idat_buf, idat_len)
+			|| unlen != (uLongf)unsize)
+		{
+			fprintf(stderr, "img_load_png: uncompressed size incorrect or unpack failure\n");
+			free(unpackbuf);
+			free(idat_buf);
+			return NULL;
+		}
+
+		// filter image
+		uint8_t *fx = unpackbuf + 1;
+		uint8_t *fa = NULL;
+		uint8_t *fb = NULL;
+		uint8_t *fc = NULL;
+
+		for(y = 0; y < img_h; y++)
+		{
+			uint8_t *nfb = fx;
+			uint8_t typ = fx[-1];
+			fa = fc = NULL;
+
+			// we're not loading PNG files all the time
+			// so it's a good time to rank purity over speed
+			for(x = 0; x < img_h; x++)
+			{
+				for(i = 0; i < 4; i++)
+				{
+					switch(typ)
+					{
+						case 0: // None
+							break;
+						case 1: // Sub
+							fx[i] += (fa == NULL ? 0 : fa[i]);
+							break;
+						case 2: // Up
+							fx[i] += (fb == NULL ? 0 : fb[i]);
+							break;
+						case 3: // Average
+							fx[i] += (((int)(fa == NULL ? 0 : fa[i]))
+								+ (int)(fb == NULL ? 0 : fb[i]))
+								/ 2;
+							break;
+						case 4: // Paeth
+						{
+							int pia = (int)(fa == NULL ? 0 : fa[i]);
+							int pib = (int)(fb == NULL ? 0 : fb[i]);
+							int pic = (int)(fc == NULL ? 0 : fc[i]);
+
+							int p = pia + pib - pic;
+							int pa = (p > pia ? p - pia : pia - p);
+							int pb = (p > pib ? p - pib : pib - p);
+							int pc = (p > pic ? p - pic : pic - p);
+
+							int pr = 0;
+							if(pa <= pb && pa <= pc) pr = pia;
+							else if(pb <= pc) pr = pib;
+							else pr = pic;
+
+							fx[i] += pr;
+						} break;
+						default:
+							fprintf(stderr, "img_load_png: invalid filter\n");
+							free(unpackbuf);
+							free(idat_buf);
+							return NULL;
+					}
+				}
+
+				fa = fx; fx += 4;
+				if(fb != NULL) { fc = fb; fb += 4; }
+			}
+
+			fb = nfb;
+			fx++; // Skip filter mode byte
+		}
+
+		// Create image
+		img_t *img = img_new(img_w, img_h);
+		for(y = 0; y < img_h; y++)
+		{
+			uint8_t *p = (unpackbuf + y*(4*img_w+1) + 1);
+			uint8_t *d = (uint8_t *)(img->data + img_w*y);
+			for(x = 0; x < img_w; x++)
+			{
+				d[0] = p[2];
+				d[1] = p[1];
+				d[2] = p[0];
+				d[3] = p[3];
+				p += 4;
+				d += 4;
+			}
+		}
+
+		free(unpackbuf);
+		free(idat_buf);
+		return img;
+	}
 }
 

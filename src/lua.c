@@ -62,6 +62,7 @@ int fl_img_new(lua_State *L)
 	if(w <= 0 || h <= 0) return luaL_error(L, "invalid img dimensions %d x %d", w, h);
 
 	img_t *img = img_new_ud(L, w, h);
+	(void)img;
 	return 1;
 }
 
@@ -82,6 +83,8 @@ int fl_img_load(lua_State *L)
 	const char *fmt = (top < 2 ? "png" : lua_tostring(L, 1));
 
 	// TODO: call common.fetch when it exists
+	(void)fmt;
+
 	int len = 0;
 	const char *data = file_get(fname, &len);
 	if(data == NULL)

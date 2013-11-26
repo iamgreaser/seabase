@@ -43,6 +43,7 @@ int map_free_gc(lua_State *L)
 	ud_t *ud = lua_touserdata(L, 1);
 	printf("Freeing map %p\n", ud);
 	map_free((map_t *)(ud->v));
+	return 0;
 }
 
 /**

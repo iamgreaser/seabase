@@ -149,5 +149,8 @@ map_t *map_new(int w, int h);
 map_t *map_new_ud(lua_State *L, int w, int h);
 void map_tick_atmos(map_t *map);
 
+// png.c
+img_t *img_load_png(const char *data, int len);
+
 // main.c
 

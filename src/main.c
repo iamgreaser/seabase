@@ -84,12 +84,15 @@ void open_libs_lua(lua_State *L)
 	lua_pushcfunction(L, fl_wrap_dofile); lua_setglobal(L, "dofile");
 }
 
-int main(int argc, const char *argv)
+int main(int argc, const char *argv[])
 {
+	(void)argc;
+	(void)argv;
+
 	char *data;
 	int len;
 	data = file_get_direct("pkg/base/gfx/hello.png", &len);
-	img_load_png(data, len);
+	img_t *bimg = img_load_png(data, len);
 	
 	SDL_Init(SDL_INIT_TIMER | SDL_INIT_VIDEO | SDL_INIT_NOPARACHUTE);
 	atexit(SDL_Quit);
@@ -226,6 +229,16 @@ int main(int argc, const char *argv)
 				*(d0++) = *(d1++) = *(d2++) = *s;
 				*(d0++) = *(d1++) = *(d2++) = *(s++);
 			}
+		}
+
+		// TEST: render test image
+		for(y = 0; y < bimg->h; y++)
+		for(x = 0; x < bimg->w; x++)
+		{
+			uint32_t *d = (uint32_t *)(real_screen->pixels + x*4 + y*real_screen->pitch);
+			uint32_t sv = bimg->data[x + y*bimg->w];
+			if(sv > 0x80000000U)
+				*d = sv;
 		}
 
 		SDL_Flip(real_screen);

@@ -15,6 +15,7 @@ int img_free_gc(lua_State *L)
 	ud_t *ud = lua_touserdata(L, 1);
 	printf("Freeing img %p\n", ud);
 	img_free((img_t *)(ud->v));
+	return 0;
 }
 
 /**
