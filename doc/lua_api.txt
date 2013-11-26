@@ -35,6 +35,7 @@ The following libraries are available (TODO: confine it to this):
 The following functions are wrapped (TODO: actually do this):
 * dofile(fname) -> return loadfile(fname)()
 * loadfile(fname) -> return common.fetch("lua", fname)
+* load(func) will forbid Lua bytecode from being executed.
 * loadstring(str) will forbid Lua bytecode from being executed.
 
 #
