@@ -116,9 +116,17 @@ function hook_render(sec_current, sec_delta)
 		elseif typ == TURF.FLOOR then
 			tx, ty = 1, 0
 		elseif typ == TURF.WALL then
-			-- TODO: neighbouring cells
 			tx, ty = 0, 2
 			water = 0
+			local t0 = (x >= #(test_map[1]) and TURF.WATER) or common.turf_get_type(map, x+1, y)
+			local t1 = (y >= #test_map and TURF.WATER) or common.turf_get_type(map, x, y+1)
+			local t2 = (x <= 1 and TURF.WATER) or common.turf_get_type(map, x-1, y)
+			local t3 = (y <= 1 and TURF.WATER) or common.turf_get_type(map, x, y-1)
+			
+			if t0 == TURF.WALL then tx = tx + 1 end
+			if t1 == TURF.WALL then tx = tx + 2 end
+			if t2 == TURF.WALL then tx = tx + 4 end
+			if t3 == TURF.WALL then tx = tx + 8 end
 		end
 		water = math.max(0, math.min(1, water))
 		water = math.floor(water * 16 - 0.5)
