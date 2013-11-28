@@ -1,7 +1,21 @@
 /*
-i'll sort out the licensing crap when i get around to it --GM
-*/
+Sea Base Omega - C Section
+Copyright (C) 2013, Ben "GreaseMonkey" Russell & contributors
 
+This program is free software; you can redistribute it and/or
+modify it under the terms of the GNU General Public License
+as published by the Free Software Foundation; either version 2
+of the License, or (at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program; if not, write to the Free Software
+Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+*/
 #include "common.h"
 
 SDL_Surface *real_screen;
@@ -13,39 +27,6 @@ map_t *map_server = NULL;
 int64_t time_current, time_prev;
 
 int is_client = 1;
-
-int bubcount = 0;
-
-/*
-	// brief Simple stdout print function for the Squirrel VM.
-	Might be useful later?
-*/
-/*
-void hsq_print_stdout(HSQUIRRELVM S, const SQChar *buf, ...)
-{
-	va_list vl;
-
-	printf((S == S_server ? "[server] " : S == S_client ? "[client] " : "[??????] "));
-
-	va_start(vl, buf);
-	vprintf(buf, vl);
-	va_end(vl);
-
-	printf("\n");
-}
-*/
-
-uint8_t dithtab2[4] = {
-	0, 2,
-	3, 1,
-};
-
-uint8_t dithtab4[16] = {
-	0x0, 0x8, 0x2, 0xA,
-	0xC, 0x4, 0xE, 0x6,
-	0x3, 0xB, 0x1, 0x9,
-	0xF, 0x7, 0xD, 0x5,
-};
 
 /**
 	\brief Get the current time in microseconds.
@@ -232,46 +213,6 @@ int main(int argc, const char *argv[])
 		if(map_client != NULL)
 		{
 			map_tick_atmos(map_client);
-			/*
-			for(y = 0; y < map_client->h && y < 12; y++)
-			for(x = 0; x < map_client->w && x < 20; x++)
-			{
-				uint32_t *p;
-				int sx, sy;
-
-				cell_t *c = &(map_client->c[y*map_client->w + x]);
-				uint32_t v = 0xFFFF00FF;
-
-				switch(c->turf.type)
-				{
-					case TURF_WATER:
-						v = 0xFF0000FF;
-						break;
-					case TURF_FLOOR:
-						v = 0xFFAAAAAA;
-						break;
-					case TURF_WALL:
-						v = 0xFF555555;
-						break;
-
-				}
-				v = (((int)(c->gas.g.o2*255))<<8) | (((int)(c->gas.g.n2*255))<<16) | 0xFF000000;
-
-				for(sy = 0; sy < 16; sy++)
-				{
-					p = (uint32_t *)(screen->pixels + (y*16+sy)*screen->pitch);
-					p += x*16;
-					for(sx = 0; sx < 16; sx++)
-					{
-						int dtidx = ((sx)&3)|(((sy)&3)<<2);
-						dtidx = (dtidx+(bubcount>>3))&15;
-						*(p++) = (c->gas.g.water*16.0f - 0.5f > dithtab4[dtidx]
-							? 0x000000FF
-							: 0x00000000) | v;
-					}
-				}
-			}
-			*/
 		}
 
 		// TODO: use pcall
@@ -305,8 +246,6 @@ int main(int argc, const char *argv[])
 		SDL_Flip(real_screen);
 
 		SDL_Delay(10);
-
-		bubcount++;
 
 		SDL_Event ev;
 		while(SDL_PollEvent(&ev))

@@ -19,3 +19,17 @@ Unlike Iceball, there will be no TCP-based protocol, just an ENet one. Having to
 
 This engine is not expected to be as flexible as Iceball's, as I need to ensure that the atmos sim runs quickly.
 
+----
+
+LICENSING:
+* The C code (the stuff in the src/ directory) is available under GPLv2.
+  * The PNG loader (src/png.c) is also available under the zlib licence.
+* The Lua code (pkg/.../*.lua) is available under the zlib licence.
+* All assets are licensed under Creative Commons 3.0 By-Attribution Share-Alike:
+  * http://creativecommons.org/licenses/by-sa/3.0/
+* All documentation (unless otherwise noted) is available under CC0:
+  * https://creativecommons.org/publicdomain/zero/1.0/
+  * This includes this text file.
+  * This might not include certain licences.
+* All Makefiles are also under CC0.
+

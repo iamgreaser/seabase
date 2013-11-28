@@ -11,6 +11,7 @@ OBJS = \
 	$(OBJDIR)/lua_map.o \
 	$(OBJDIR)/lua_turf.o \
 	$(OBJDIR)/map.o \
+	$(OBJDIR)/net.o \
 	$(OBJDIR)/png.o \
 	\
 	$(OBJDIR)/main.o
