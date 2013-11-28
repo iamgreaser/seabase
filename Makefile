@@ -17,7 +17,7 @@ OBJS = \
 
 CFLAGS = -g -O2 `sdl-config --cflags` -Wall -Wextra
 LDFLAGS = -g
-LIBS = -lm `sdl-config --libs` -llua-5.1 -lz
+LIBS = -lm `sdl-config --libs` -llua-5.1 -lz -lenet
 
 BINNAME = seabase
 

@@ -100,10 +100,17 @@ common.turf_set_type(map, x, y, TURF.FLOOR)
 
 local sec_beg = nil
 
+function set_sec_beg(sec)
+	if not sec_beg then
+		sec_beg = sec
+		math.randomseed(sec)
+	end
+end
+
 function hook_render(sec_current, sec_delta)
 	local x,y
 
-	sec_beg = sec_beg or sec_current
+	set_sec_beg(sec_current)
 
 	for y=1,#test_map do
 	for x=1,#(test_map[1]) do
@@ -144,11 +151,15 @@ function hook_render(sec_current, sec_delta)
 	local xbase = ((sec_current - sec_beg) % 5.0) / 5.0
 	xbase = xbase * (320 + 2*100)
 	xbase = xbase - 100
-	common.img_blit(nil, xbase, 0, BF_AM_THRES,
-		100, 100, 100, 100, nil)
+	local x = wall_list[deadwall][1] - 100/32
+	local y = wall_list[deadwall][2] - 100/32
+	common.img_blit(nil, 320-100, 0, BF_AM_THRES,
+		(x-1)*16, (y-1)*16, 100, 100, nil)
 end
 
 function hook_tick(sec_current, sec_delta)
+	set_sec_beg(sec_current)
+
 	poop = poop - 1
 	if poop <= 0 then
 		poop = 100

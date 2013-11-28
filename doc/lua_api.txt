@@ -5,6 +5,10 @@ Filenames can only contain the following characters:
 Furthermore, filenames cannot contain two periods in a row (that is, "..").
 The directory separator is a forward slash ("/"). This is to ensure cross-platform portability, and to serve as a reminder that Windows is a pile of shit and that you should be using a Unix-based system instead.
 
+Filenames are case-sensitive.
+
+Note, pathname validity checks (other than the ".." check) are not performed on the client for areas marked as "no access" or "remote".
+
 The following directories have the following meanings:
 * pkg/ - Remote on client, local on server, read-only ("packages").
 * clsave/pub/ - Client only, local, read-only ("public").
@@ -40,6 +44,18 @@ The following functions are wrapped (TODO: actually do this):
 
 common.fetch() returns instantly, even for files which need to be loaded from the server.
 However, attempting to use the objects before they are loaded will block unless otherwise noted.
+
+#
+# Common hooks
+#
+hook_tick = fn(sec_current, sec_delta):
+	Called every logic tick.
+
+#
+# Client hooks
+#
+hook_render = fn(sec_current, sec_delta):
+	Called every time the screen needs to be redrawn.
 
 #
 # File handling

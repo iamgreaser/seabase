@@ -33,6 +33,13 @@
 #define BF_AM_BLEND    0x00000002
 #define BF_AM_DITHER   0x00000003
 
+enum
+{
+	SEC_FORBID = 0,
+	SEC_LOCAL,
+	SEC_REMOTE,
+};
+
 #define GAS_COUNT 5
 typedef union gasmix
 {
@@ -187,4 +194,5 @@ img_t *img_load_png(const char *data, int len);
 
 // main.c
 extern SDL_Surface *screen;
+extern int is_client;
 

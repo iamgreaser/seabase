@@ -12,6 +12,8 @@ map_t *map_client = NULL;
 map_t *map_server = NULL;
 int64_t time_current, time_prev;
 
+int is_client = 1;
+
 int bubcount = 0;
 
 /*
@@ -65,6 +67,33 @@ int64_t time_get_us(void)
 }
 
 /**
+	\brief Lua: wrapped loadfile
+
+	\param fname
+
+	\return Lua function, or a Lua error on failure.
+*/
+int fl_wrap_loadfile(lua_State *L)
+{
+	int top = lua_gettop(L);
+	if(top < 1) return luaL_error(L, "not enough arguments for loadfile");
+
+	// TODO: depend on common.fetch and of course make it exist
+	int len;
+	const char *fname = lua_tostring(L, 1);
+	char *data = file_get(fname, &len);
+	if(data == NULL) return luaL_error(L, "file fetch failed");
+
+	lua_getglobal(L, "loadstring");
+	lua_pushlstring(L, data, len);
+	lua_call(L, 1, 1);
+
+	free(data);
+
+	return 1;
+}
+
+/**
 	\brief Lua: wrapped dofile
 
 	\param fname
@@ -99,9 +128,9 @@ void open_libs_lua(lua_State *L)
 	lua_pushcfunction(L, luaopen_table); lua_call(L, 0, 0);
 
 	// Wrap certain functions
-	// TODO: loadfile(fname) -> return common.fetch("lua", fname)
 	// TODO: forbid bytecode in loadstring(s) / load(fn[, chunkname])
 	lua_pushcfunction(L, fl_wrap_dofile); lua_setglobal(L, "dofile");
+	lua_pushcfunction(L, fl_wrap_loadfile); lua_setglobal(L, "loadfile");
 }
 
 int main(int argc, const char *argv[])
@@ -164,7 +193,10 @@ int main(int argc, const char *argv[])
 	screen = SDL_CreateRGBSurface(SDL_SWSURFACE, 320, 200, 32,
 		0x000000FF, 0x0000FF00, 0x00FF0000, 0xFF000000);
 
-	if(luaL_loadfile(L_client, "pkg/base/main_client.lua") == 0)
+	lua_getglobal(L_client, "loadfile");
+	lua_pushstring(L_client, "pkg/base/main_client.lua");
+	lua_call(L_client, 1, 1);
+	if(1)
 	{
 		// TODO: use pcall
 		lua_call(L_client, 0, 0);
