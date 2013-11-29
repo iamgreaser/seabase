@@ -75,11 +75,34 @@ int fl_fetch(lua_State *L)
 	const char *fmt = lua_tostring(L, 1);
 	const char *fname = lua_tostring(L, 2);
 
-	// TODO!
-	(void)fmt;
-	(void)fname;
+	printf("fetch [%s] [%s]\n", fmt, fname);
 
-	luaL_error(L, "TODO: common.fetch");
+	switch(file_sec_check(fname, is_client, 0))
+	{
+		case SEC_LOCAL: {
+			int len = 0;
+			const char *data = file_get(fname, &len);
+
+			if(data == NULL)
+				return luaL_error(L, "data failed to fetch");
+
+			file_parse_any(L, data, len, fmt);
+		} break;
+
+		case SEC_REMOTE: {
+			// TODO!
+			return luaL_error(L, "TODO: remote");
+		} break;
+
+		case SEC_FORBID: {
+			return luaL_error(L, "access denied");
+		} break;
+		
+		default:
+			fprintf(stderr, "EDOOFUS: file_sec_check returned invalid enum!\n");
+			fflush(stderr);
+			abort();
+	}
 
 	return 1;
 }

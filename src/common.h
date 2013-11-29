@@ -181,6 +181,7 @@ void blit_sdl_to_sdl(
 // file.c
 char *file_get_direct(const char *fname, int *len);
 int file_sec_check(const char *fname, int is_client, int is_write);
+void file_parse_any(lua_State *L, const char *data, int len, const char *fmt);
 char *file_get(const char *fname, int *len);
 
 // img.c
@@ -195,7 +196,6 @@ int fl_fetch(lua_State *L);
 int fl_draw_rect_fill(lua_State *L);
 int fl_draw_rect_outl(lua_State *L);
 int fl_img_new(lua_State *L);
-int fl_img_load(lua_State *L);
 int fl_img_blit(lua_State *L);
 int fl_map_new(lua_State *L);
 int fl_turf_get_gas(lua_State *L);

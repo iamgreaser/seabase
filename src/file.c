@@ -111,7 +111,8 @@ int file_sec_check(const char *fname, int is_client, int is_write)
 	
 	// Specific paths
 	if(strlen(fname) >= 4 && (!is_write) && !memcmp(fname, "pkg/", 4))
-		return (is_client ? SEC_REMOTE : SEC_LOCAL);
+		//return (is_client ? SEC_REMOTE : SEC_LOCAL);
+		return SEC_LOCAL; // TODO: set to SEC_REMOTE once remote fetching is in place
 	if(strlen(fname) >= 11 && is_client && (!is_write) && !memcmp(fname, "clsave/pub/", 11))
 		return SEC_LOCAL;
 	if(strlen(fname) >= 11 && is_client && !memcmp(fname, "clsave/vol/", 11))
@@ -133,19 +134,30 @@ int file_sec_check(const char *fname, int is_client, int is_write)
 	\param len Length of data.
 	\param fmt Format of data.
 
-	\return Pushes the required object onto the Lua stack.
+	\return Pushes the required object onto the Lua stack, if it hasn't thrown an error.
 */
 void file_parse_any(lua_State *L, const char *data, int len, const char *fmt)
 {
 	// TODO!
-	(void)L;
-	(void)data;
-	(void)len;
-	(void)fmt;
+	if(!strcmp(fmt, "lua"))
+	{
+		lua_getglobal(L, "loadstring");
+		lua_pushlstring(L, data, len);
+		lua_call(L, 1, 1);
+	} else if(!strcmp(fmt, "png")) {
+		img_t *img = img_load_png(data, len);
+		if(img == NULL)
+			luaL_error(L, "image failed to parse");
+		img_provide_ud(L, img);
+	} else {
+		luaL_error(L, "invalid format \"%s\"", fmt);
+	}
 }
 
 /**
 	\brief Load a file using the appropriate method.
+
+	FIXME: May need an API change to drop objects directly onto the Lua stack.
 
 	\param fname Name of file to be read.
 	\param len Pointer to return length of data.
@@ -157,9 +169,13 @@ char *file_get(const char *fname, int *len)
 	switch(file_sec_check(fname, is_client, 0))
 	{
 		case SEC_LOCAL:
-		case SEC_REMOTE:
 			printf("accepted %s\n", fname);
 			return file_get_direct(fname, len);
+		case SEC_REMOTE:
+			fprintf(stderr, "TODO: remote\n");
+			fflush(stderr);
+			abort();
+			break;
 		case SEC_FORBID:
 			printf("forbidden %s\n", fname);
 			return NULL;

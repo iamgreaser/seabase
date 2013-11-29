@@ -43,8 +43,8 @@ BF_AM_THRES    = 0x00000001
 BF_AM_BLEND    = 0x00000002
 BF_AM_DITHER   = 0x00000003
 
-img_tiles = common.img_load("pkg/base/gfx/hello.png")
-img_font = common.img_load("pkg/base/gfx/font-mini.png")
+img_tiles = common.fetch("png", "pkg/base/gfx/hello.png")
+img_font = common.fetch("png", "pkg/base/gfx/font-mini.png")
 
 function puts(x, y, s)
 	local i

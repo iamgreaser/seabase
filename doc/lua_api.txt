@@ -65,9 +65,10 @@ Formats:
 	"lua": Lua script
 
 obj = common.fetch(fmt, fname):
-	### NOT IMPLEMENTED ###
 	Loads a file of a given format and returns the correct object.
 	Throws an error on failure.
+
+	### TODO: REMOTE FETCHING + RETURN STUFF THAT'S STILL LOADING ###
 
 result = common.is_loaded(obj):
 	### NOT IMPLEMENTED ###
@@ -114,10 +115,6 @@ Blit flags:
 
 img = common.img_new(w, h):
 	Creates a new, blank image.
-
-img = common.img_load(fname, fmt="png"):
-	Loads an image from a file.
-	Throws a Lua error on failure.
 
 w, h = common.img_get_dims(img):
 	Returns the dimensions of an image.

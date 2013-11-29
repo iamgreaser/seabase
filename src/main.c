@@ -158,7 +158,6 @@ int main(int argc, const char *argv[])
 	ADDFN(fl_draw_rect_outl, "draw_rect_outl");
 
 	ADDFN(fl_img_new, "img_new");
-	ADDFN(fl_img_load, "img_load");
 	ADDFN(fl_img_blit, "img_blit");
 
 	ADDFN(fl_map_new, "map_new");
@@ -179,9 +178,12 @@ int main(int argc, const char *argv[])
 	screen = SDL_CreateRGBSurface(SDL_SWSURFACE, 320, 200, 32,
 		0x000000FF, 0x0000FF00, 0x00FF0000, 0xFF000000);
 
-	lua_getglobal(L_client, "loadfile");
+	lua_getglobal(L_client, "common");
+	lua_getfield(L_client, -1, "fetch");
+	lua_pop(L_client, -3);
+	lua_pushstring(L_client, "lua");
 	lua_pushstring(L_client, "pkg/base/main_client.lua");
-	lua_call(L_client, 1, 1);
+	lua_call(L_client, 2, 1);
 	if(1)
 	{
 		// TODO: use pcall

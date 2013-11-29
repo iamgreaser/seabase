@@ -42,39 +42,6 @@ int fl_img_new(lua_State *L)
 }
 
 /**
-	\brief Lua: Loads an image from a file, throwing an error on failure.
-
-	\param fname Filename of image to load.
-	\param fmt File format (default: "png").
-
-	\return Image userpointer.
-*/
-int fl_img_load(lua_State *L)
-{
-	int top = lua_gettop(L);
-	if(top < 1) return luaL_error(L, "not enough arguments for img_load");
-
-	const char *fname = lua_tostring(L, 1);
-	const char *fmt = (top < 2 ? "png" : lua_tostring(L, 1));
-
-	// TODO: call common.fetch when it exists
-	(void)fmt;
-
-	int len = 0;
-	const char *data = file_get(fname, &len);
-	if(data == NULL)
-		return luaL_error(L, "image failed to fetch");
-	
-	// TODO: handle when format != "png"
-	img_t *img = img_load_png(data, len);
-	if(img == NULL)
-		return luaL_error(L, "image failed to parse");
-	ud_t *ud = img_provide_ud(L, img);
-	(void)ud;
-	return 1;
-}
-
-/**
 	\brief Lua: Blits from an image/the screen to an image/the screen.
 	
 	Blitting to/from the screen on the server will throw a Lua error.
