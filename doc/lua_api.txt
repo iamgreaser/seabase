@@ -68,7 +68,7 @@ obj = common.fetch(fmt, fname):
 	Loads a file of a given format and returns the correct object.
 	Throws an error on failure.
 
-	### TODO: REMOTE FETCHING + RETURN STUFF THAT'S STILL LOADING ###
+	### TODO: ACTUALLY FETCH OVER THE NETWORK (deferred loading works btw) ###
 
 result = common.is_loaded(obj):
 	### NOT IMPLEMENTED ###

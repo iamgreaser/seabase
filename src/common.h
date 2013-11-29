@@ -97,6 +97,8 @@ enum
 	UD_LOADING, // special type to indicate file is being fetched
 	UD_FAILED, // special type to indicate loading failed
 
+	UD_LUA,
+
 	UD_MAP,
 	UD_IMG,
 };
@@ -118,9 +120,9 @@ struct loading
 	void *v; /// pointer to actual data
 	int dlen, alen; /// data length, allocated length
 
-	int fmt; /// file format
+	char *fmt; /// file format
 	ud_t *p, *n; /// previous/next ud_t blocks in chain
-	const char *fname; /// name of file
+	char *fname; /// name of file
 	int resid; /// resource ID (sanity check)
 };
 
@@ -181,7 +183,7 @@ void blit_sdl_to_sdl(
 // file.c
 char *file_get_direct(const char *fname, int *len);
 int file_sec_check(const char *fname, int is_client, int is_write);
-void file_parse_any(lua_State *L, const char *data, int len, const char *fmt);
+void file_parse_any(lua_State *L, const char *data, int len, const char *fmt, const char *fname);
 char *file_get(const char *fname, int *len);
 
 // img.c
@@ -192,6 +194,7 @@ img_t *img_new_ud(lua_State *L, int w, int h);
 
 // lua.c / lua_*.c
 ud_t *ud_get_block(lua_State *L, int typ, char *tname, int idx);
+int fl_block(lua_State *L);
 int fl_fetch(lua_State *L);
 int fl_draw_rect_fill(lua_State *L);
 int fl_draw_rect_outl(lua_State *L);

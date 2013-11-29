@@ -153,6 +153,7 @@ int main(int argc, const char *argv[])
 	lua_newtable(L_server);
 
 	ADDFN(fl_fetch, "fetch");
+	ADDFN(fl_block, "block");
 
 	ADDFN(fl_draw_rect_fill, "draw_rect_fill");
 	ADDFN(fl_draw_rect_outl, "draw_rect_outl");

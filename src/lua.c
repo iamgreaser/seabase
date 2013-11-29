@@ -38,25 +38,146 @@ ud_t *ud_get_block(lua_State *L, int typ, char *tname, int idx)
 	ud_t *ud = lua_touserdata(L, idx);
 
 	if(ud == NULL)
-		luaL_error(L, "type mismatch for %s", tname);
+		luaL_error(L, "got a null for %s", tname);
 
 	if(ud->ud == UD_LOADING)
 	{
-		loading_t *ld = (loading_t *)(ud->v);
+		loading_t *loading = (loading_t *)(ud->v);
 
-		if(ld->ud != typ)
-			luaL_error(L, "type mismatch for %s", tname);
+		// TODO: actually use the correct ud
+		//if(loading->ud != typ)
+		//	luaL_error(L, "type mismatch for %s", tname);
 
-		// TODO: block
-		fprintf(stderr, "TODO: block on UD_LOADING in ud_get_block\n");
-		fflush(stderr);
-		abort();
+		// push current userdata onto the stack
+		// this is just in case someone gave idx a -ve value
+		lua_pushvalue(L, idx);
+
+		// TODO: actually block
+		// FIXME: this should use ud_get_block, actually
+		// get data
+		{
+			// TODO: block nicely when we actually network stuff
+			int len = 0;
+			const char *data = file_get(loading->fname, &len);
+
+			if(data == NULL)
+				luaL_error(L, "data failed to fetch");
+
+			file_parse_any(L, data, len, loading->fmt, loading->fname);
+		}
+
+		// delete the loading_t structure
+		if(loading->v != NULL) free(loading->v);
+		if(loading->n != NULL) ((loading_t *)(loading->n->v))->p = loading->p;
+		if(loading->p != NULL) ((loading_t *)(loading->p->v))->n = loading->n;
+		free(loading->fname);
+		free(loading->fmt);
+
+		// steal everything from the new userdata (if possible)
+		ud_t *cud = lua_touserdata(L, -1);
+
+		if(cud == NULL)
+		{
+			fprintf(stderr, "TODO: ud_get_block blocked for Lua scripts\n");
+			fflush(stderr);
+			abort();
+		} else {
+			// this sort of shit would make the average Java programmer cry.
+			// it also makes us C programmers glad that we use C :)
+			memcpy(ud, cud, sizeof(ud_t));
+			lua_getmetatable(L, -1);
+			lua_setmetatable(L, -3);
+			lua_newtable(L);
+			lua_setmetatable(L, -2);
+			cud->ud = UD_INVALID;
+			cud->v = NULL;
+		}
+
+		// remove cud from the stack
+		lua_pop(L, -1);
+		printf("does this work? %p %i\n", ud->v, ((img_t *)(ud->v))->w);
+
+		// also remove ud from the stack
+		lua_pop(L, -1);
 	}
 
 	if(ud->ud != typ)
 		luaL_error(L, "type mismatch for %s", tname);
 	
 	return ud;
+}
+
+/**
+	\brief Lua: Blocks until an object is loaded.
+
+	\param obj Object to wait for.
+
+	\return The object you fed in.
+*/
+int fl_block(lua_State *L)
+{
+	int top = lua_gettop(L);
+	if(top < 1) return luaL_error(L, "not enough arguments for block");
+
+	luaL_error(L, "TODO: common.block");
+
+	// return input
+	lua_pushvalue(L, 1);
+	return 1;
+}
+
+/**
+	\brief Lua: Relevant __call metamethod for Lua functions not loaded yet.
+*/
+int fl_block_proxy(lua_State *L)
+{
+	int top = lua_gettop(L);
+	ud_t *ud = lua_touserdata(L, lua_upvalueindex(1));
+
+	if(ud == NULL)
+		return luaL_error(L, "UD_LOADING __call has nil upvalue!");
+	
+	if(ud->ud != UD_LOADING)
+		return luaL_error(L, "UD_LOADING __call has non-UD_LOADING upvalue!");
+	
+	loading_t *loading = (loading_t *)(ud->v);
+
+	// get function
+	{
+		// TODO: block nicely when we actually network stuff
+		int len = 0;
+		const char *data = file_get(loading->fname, &len);
+
+		if(data == NULL)
+			return luaL_error(L, "data failed to fetch");
+
+		file_parse_any(L, data, len, loading->fmt, loading->fname);
+	}
+
+	// duplicate then shove into __call
+	lua_getmetatable(L, 1);
+	lua_pushvalue(L, -2);
+	lua_setfield(L, -2, "__call");
+	lua_setmetatable(L, 1);
+
+	// delete the loading_t structure
+	if(loading->v != NULL) free(loading->v);
+	if(loading->n != NULL) ((loading_t *)(loading->n->v))->p = loading->p;
+	if(loading->p != NULL) ((loading_t *)(loading->p->v))->n = loading->n;
+	free(loading->fname);
+	free(loading->fmt);
+
+	ud->ud = UD_LUA;
+	ud->v = NULL;
+	ud->dlen = ud->alen = 0;
+
+	// atm we're being kinda silly and assuming we can just use the args directly
+	printf("attempt call %i %i\n", top, lua_gettop(L));
+	lua_call(L, 0, LUA_MULTRET);
+	printf("call attempted\n");
+
+	int ntop = lua_gettop(L);
+	return ntop;
 }
 
 /**
@@ -86,12 +207,37 @@ int fl_fetch(lua_State *L)
 			if(data == NULL)
 				return luaL_error(L, "data failed to fetch");
 
-			file_parse_any(L, data, len, fmt);
+			file_parse_any(L, data, len, fmt, fname);
 		} break;
 
 		case SEC_REMOTE: {
+			// TODO: actually send the file
+			loading_t *loading = malloc(sizeof(loading_t));
+			loading->ud = UD_INVALID;
+			loading->v = NULL;
+			loading->dlen = loading->alen = 0;
+
+			loading->fmt = strdup(fmt);
+			loading->p = loading->n = NULL; // TODO: add these to a ring
+			loading->fname = strdup(fname);
+			loading->resid = -1;
+
+			ud_t *ud = lua_newuserdata(L, sizeof(ud_t));
+			ud->ud = UD_LOADING;
+			ud->v = (void *)loading;
+			ud->dlen = ud->alen = sizeof(loading_t);
+
+			lua_newtable(L);
+			// TODO: add __gc method
+			if(!strcmp(fmt, "lua"))
+			{
+				lua_pushvalue(L, -2);
+				lua_pushcclosure(L, fl_block_proxy, 1);
+				lua_setfield(L, -2, "__call");
+			}
+			lua_setmetatable(L, -2);
 			// TODO!
-			return luaL_error(L, "TODO: remote");
+			//return luaL_error(L, "TODO: remote");
 		} break;
 
 		case SEC_FORBID: {

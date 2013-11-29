@@ -105,14 +105,12 @@ int file_sec_check(const char *fname, int is_client, int is_write)
 		if(*v >= 'A' && *v <= 'Z') continue;
 
 		printf("bad char %c\n", *v);
-		//return (is_client ? SEC_REMOTE : SEC_FORBID);
-		return SEC_FORBID; // TODO: set to SEC_REMOTE once remote fetching is in place
+		return (is_client ? SEC_REMOTE : SEC_FORBID);
 	}
 	
 	// Specific paths
 	if(strlen(fname) >= 4 && (!is_write) && !memcmp(fname, "pkg/", 4))
-		//return (is_client ? SEC_REMOTE : SEC_LOCAL);
-		return SEC_LOCAL; // TODO: set to SEC_REMOTE once remote fetching is in place
+		return (is_client ? SEC_REMOTE : SEC_LOCAL);
 	if(strlen(fname) >= 11 && is_client && (!is_write) && !memcmp(fname, "clsave/pub/", 11))
 		return SEC_LOCAL;
 	if(strlen(fname) >= 11 && is_client && !memcmp(fname, "clsave/vol/", 11))
@@ -136,14 +134,15 @@ int file_sec_check(const char *fname, int is_client, int is_write)
 
 	\return Pushes the required object onto the Lua stack, if it hasn't thrown an error.
 */
-void file_parse_any(lua_State *L, const char *data, int len, const char *fmt)
+void file_parse_any(lua_State *L, const char *data, int len, const char *fmt, const char *fname)
 {
 	// TODO!
 	if(!strcmp(fmt, "lua"))
 	{
 		lua_getglobal(L, "loadstring");
 		lua_pushlstring(L, data, len);
-		lua_call(L, 1, 1);
+		lua_pushstring(L, fname);
+		lua_call(L, 2, 1);
 	} else if(!strcmp(fmt, "png")) {
 		img_t *img = img_load_png(data, len);
 		if(img == NULL)
@@ -172,10 +171,23 @@ char *file_get(const char *fname, int *len)
 			printf("accepted %s\n", fname);
 			return file_get_direct(fname, len);
 		case SEC_REMOTE:
-			fprintf(stderr, "TODO: remote\n");
-			fflush(stderr);
-			abort();
-			break;
+			switch(file_sec_check(fname, 0, 0))
+			{
+				case SEC_LOCAL:
+					printf("remote %s\n", fname);
+					return file_get_direct(fname, len);
+				case SEC_REMOTE:
+					printf("doubly-remote?! FORBID %s\n", fname);
+					return NULL;
+				case SEC_FORBID:
+					printf("forbidden %s\n", fname);
+					return NULL;
+				default:
+					fprintf(stderr, "EDOOFUS: file_sec_check returned invalid enum!\n");
+					fflush(stderr);
+					abort();
+					return NULL;
+			} break;
 		case SEC_FORBID:
 			printf("forbidden %s\n", fname);
 			return NULL;
