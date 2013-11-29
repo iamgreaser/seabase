@@ -107,7 +107,8 @@ wall_list = {}
 
 -- Lua is 1-based. Ugh. But we'll cope.
 print(#(test_map[1]), #test_map)
-map = common.map_new(#(test_map[1]), #test_map)
+--map = common.map_new(#(test_map[1]), #test_map)
+map = common.map_new(128, 128)
 
 local x,y
 for y=1,#test_map do
@@ -131,7 +132,7 @@ for y=1,#test_map do
 end
 
 
-poop = 5.0
+poop = 3.0
 deadwall = math.floor(math.random() * #wall_list) + 1
 local x,y
 x = wall_list[deadwall][1]
@@ -152,8 +153,8 @@ function hook_render(sec_current, sec_delta)
 
 	set_sec_beg(sec_current)
 
-	for y=1,#test_map do
-	for x=1,#(test_map[1]) do
+	for y=1,math.min(1+13-1,#test_map) do
+	for x=1,math.min(1+20-1,#(test_map[1])) do
 		local tx, ty
 		local typ = common.turf_get_type(map, x, y)
 		local water = common.turf_get_gas(map, x, y, GAS.WATER)
@@ -209,12 +210,14 @@ function hook_tick(sec_current, sec_delta)
 
 	tmr_atmos = tmr_atmos or timer_new(function(sec)
 		common.map_tick_atmos(map)
-	end, sec_current, 1.0/20.0)
+		common.turf_set_gas(map, drain_x, drain_y, GAS.WATER,
+			common.turf_get_gas(map, drain_x, drain_y, GAS.WATER) * 0.8)
+	end, sec_current, 1.0/50.0)
 
 	tmr_atmos(sec_current)
 	poop = poop - sec_delta
 	while poop <= 0 do
-		poop = poop + 5.0
+		poop = poop + 3.0
 		local x, y
 		x = wall_list[deadwall][1]
 		y = wall_list[deadwall][2]
@@ -227,8 +230,6 @@ function hook_tick(sec_current, sec_delta)
 		common.turf_set_type(map, x, y, TURF.FLOOR)
 	end
 
-	common.turf_set_gas(map, drain_x, drain_y, GAS.WATER,
-		common.turf_get_gas(map, drain_x, drain_y, GAS.WATER) * 0.8)
 end
 
 print(testlua("this", 3.14, "meow"))
