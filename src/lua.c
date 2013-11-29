@@ -23,6 +23,8 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 #include "common.h"
 
+int fl_call_proxy(lua_State *L);
+
 /**
 	\brief Lua helper: Gets a userdata safely, blocking if data still loading.
 
@@ -53,7 +55,6 @@ ud_t *ud_get_block(lua_State *L, int typ, char *tname, int idx)
 		lua_pushvalue(L, idx);
 
 		// TODO: actually block
-		// FIXME: this should use ud_get_block, actually
 		// get data
 		{
 			// TODO: block nicely when we actually network stuff
@@ -78,9 +79,15 @@ ud_t *ud_get_block(lua_State *L, int typ, char *tname, int idx)
 
 		if(cud == NULL)
 		{
-			fprintf(stderr, "TODO: ud_get_block blocked for Lua scripts\n");
-			fflush(stderr);
-			abort();
+			// cud returned NULL so there SHOULD be a function there.
+
+			// duplicate then shove into __call
+			lua_getmetatable(L, -2);
+			lua_pushvalue(L, -2);
+			lua_pushcclosure(L, fl_call_proxy, 1);
+			lua_setfield(L, -2, "__call");
+			lua_setmetatable(L, -2);
+			ud->ud = UD_LUA;
 		} else {
 			// this sort of shit would make the average Java programmer cry.
 			// it also makes us C programmers glad that we use C :)
@@ -148,51 +155,19 @@ int fl_block_proxy(lua_State *L)
 {
 	int i;
 	int top = lua_gettop(L);
-	ud_t *ud = lua_touserdata(L, lua_upvalueindex(1));
+	ud_t *ud = ud_get_block(L, UD_LUA, "lua", lua_upvalueindex(1));
 
 	if(ud == NULL)
 		return luaL_error(L, "UD_LOADING __call has nil upvalue!");
 	
-	if(ud->ud != UD_LOADING)
-		return luaL_error(L, "UD_LOADING __call has non-UD_LOADING upvalue!");
+	if(ud->ud != UD_LUA)
+		return luaL_error(L, "UD_LOADING __call has non-UD_LUA upvalue!");
 	
-	loading_t *loading = (loading_t *)(ud->v);
-
-	// get function
-	{
-		// TODO: block nicely when we actually network stuff
-		int len = 0;
-		const char *data = file_get(loading->fname, &len);
-
-		if(data == NULL)
-			return luaL_error(L, "data failed to fetch");
-
-		file_parse_any(L, data, len, loading->fmt, loading->fname);
-	}
-
-	// duplicate then shove into __call
-	lua_getmetatable(L, lua_upvalueindex(1));
-	lua_pushvalue(L, -2);
-	lua_pushcclosure(L, fl_call_proxy, 1);
-	lua_setfield(L, -2, "__call");
-	lua_setmetatable(L, lua_upvalueindex(1));
-
-	// delete the loading_t structure
-	if(loading->v != NULL) free(loading->v);
-	if(loading->n != NULL) ((loading_t *)(loading->n->v))->p = loading->p;
-	if(loading->p != NULL) ((loading_t *)(loading->p->v))->n = loading->n;
-	free(loading->fname);
-	free(loading->fmt);
-
-	ud->ud = UD_LUA;
-	ud->v = NULL;
-	ud->dlen = ud->alen = 0;
-
 	// copy the args
-	for(i = 1; i < top; i++)
-		lua_pushvalue(L, i+1);
+	lua_pushvalue(L, 1);
+	for(i = 2; i <= top; i++)
+		lua_pushvalue(L, i);
 
-	//printf("attempt call %i\n", top);
 	lua_call(L, top-1, LUA_MULTRET);
 	//printf("call attempted\n");
 
