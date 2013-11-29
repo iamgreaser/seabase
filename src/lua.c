@@ -94,11 +94,10 @@ ud_t *ud_get_block(lua_State *L, int typ, char *tname, int idx)
 		}
 
 		// remove cud from the stack
-		lua_pop(L, -1);
-		printf("does this work? %p %i\n", ud->v, ((img_t *)(ud->v))->w);
+		lua_remove(L, -1);
 
 		// also remove ud from the stack
-		lua_pop(L, -1);
+		lua_remove(L, -1);
 	}
 
 	if(ud->ud != typ)
@@ -127,10 +126,27 @@ int fl_block(lua_State *L)
 }
 
 /**
+	\brief Lua: Relevant __call metamethod to remove the first userdata argument.
+*/
+int fl_call_proxy(lua_State *L)
+{
+	int top = lua_gettop(L);
+	int i;
+
+	lua_pushvalue(L, lua_upvalueindex(1));
+	for(i = 2; i <= top; i++)
+		lua_pushvalue(L, i);
+	lua_call(L, top-1, LUA_MULTRET);
+
+	return lua_gettop(L) - top;
+}
+
+/**
 	\brief Lua: Relevant __call metamethod for Lua functions not loaded yet.
 */
 int fl_block_proxy(lua_State *L)
 {
+	int i;
 	int top = lua_gettop(L);
 	ud_t *ud = lua_touserdata(L, lua_upvalueindex(1));
 
@@ -155,10 +171,11 @@ int fl_block_proxy(lua_State *L)
 	}
 
 	// duplicate then shove into __call
-	lua_getmetatable(L, 1);
+	lua_getmetatable(L, lua_upvalueindex(1));
 	lua_pushvalue(L, -2);
+	lua_pushcclosure(L, fl_call_proxy, 1);
 	lua_setfield(L, -2, "__call");
-	lua_setmetatable(L, 1);
+	lua_setmetatable(L, lua_upvalueindex(1));
 
 	// delete the loading_t structure
 	if(loading->v != NULL) free(loading->v);
@@ -171,13 +188,16 @@ int fl_block_proxy(lua_State *L)
 	ud->v = NULL;
 	ud->dlen = ud->alen = 0;
 
-	// atm we're being kinda silly and assuming we can just use the args directly
-	printf("attempt call %i %i\n", top, lua_gettop(L));
-	lua_call(L, 0, LUA_MULTRET);
-	printf("call attempted\n");
+	// copy the args
+	for(i = 1; i < top; i++)
+		lua_pushvalue(L, i+1);
+
+	//printf("attempt call %i\n", top);
+	lua_call(L, top-1, LUA_MULTRET);
+	//printf("call attempted\n");
 
 	int ntop = lua_gettop(L);
-	return ntop;
+	return ntop - top;
 }
 
 /**

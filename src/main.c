@@ -59,17 +59,13 @@ int fl_wrap_loadfile(lua_State *L)
 	int top = lua_gettop(L);
 	if(top < 1) return luaL_error(L, "not enough arguments for loadfile");
 
-	// TODO: depend on common.fetch and of course make it exist
-	int len;
 	const char *fname = lua_tostring(L, 1);
-	char *data = file_get(fname, &len);
-	if(data == NULL) return luaL_error(L, "file fetch failed");
-
-	lua_getglobal(L, "loadstring");
-	lua_pushlstring(L, data, len);
-	lua_call(L, 1, 1);
-
-	free(data);
+	lua_getglobal(L, "common");
+	lua_getfield(L, -1, "fetch");
+	lua_remove(L, -2);
+	lua_pushstring(L, "lua");
+	lua_pushstring(L, fname);
+	lua_call(L, 2, 1);
 
 	return 1;
 }
@@ -181,7 +177,7 @@ int main(int argc, const char *argv[])
 
 	lua_getglobal(L_client, "common");
 	lua_getfield(L_client, -1, "fetch");
-	lua_pop(L_client, -3);
+	lua_remove(L_client, -2);
 	lua_pushstring(L_client, "lua");
 	lua_pushstring(L_client, "pkg/base/main_client.lua");
 	lua_call(L_client, 2, 1);

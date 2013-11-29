@@ -46,6 +46,8 @@ BF_AM_DITHER   = 0x00000003
 img_tiles = common.fetch("png", "pkg/base/gfx/hello.png")
 img_font = common.fetch("png", "pkg/base/gfx/font-mini.png")
 
+testlua = loadfile("pkg/base/test.lua")
+
 function puts(x, y, s)
 	local i
 	for i=1,#s do
@@ -214,4 +216,8 @@ function hook_tick(sec_current, sec_delta)
 	common.turf_set_gas(map, drain_x, drain_y, GAS.WATER,
 		common.turf_get_gas(map, drain_x, drain_y, GAS.WATER) * 0.8)
 end
+
+print(testlua("this", 3.14, "meow"))
+print(testlua("arsethis", 3.14, "meow"))
+
 
