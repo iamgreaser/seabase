@@ -44,6 +44,16 @@ BF_AM_BLEND    = 0x00000002
 BF_AM_DITHER   = 0x00000003
 
 img_tiles = common.img_load("pkg/base/gfx/hello.png")
+img_font = common.img_load("pkg/base/gfx/font-mini.png")
+
+function puts(x, y, s)
+	local i
+	for i=1,#s do
+		local c = s:byte(i) - 0x20
+		common.img_blit(img_font, x, y, BF_AM_THRES, c*6, 0, 6, 8)
+		x = x + 6
+	end
+end
 
 local test_map = {
 	"     ####           ",
@@ -175,6 +185,12 @@ function hook_render(sec_current, sec_delta)
 	local y = wall_list[deadwall][2] - 100/32
 	common.img_blit(nil, 320-100, 0, BF_AM_THRES,
 		(x-1)*16, (y-1)*16, 100, 100, nil)
+	
+
+	local s = "All systems nominal."
+	common.draw_rect_fill(nil, 0, 0, 4 + 6*#s, 12, 0xFF225522)
+	common.draw_rect_outl(nil, 0, 0, 4 + 6*#s, 12, 0xFF88AA88)
+	puts(2, 2, s)
 end
 
 function hook_tick(sec_current, sec_delta)

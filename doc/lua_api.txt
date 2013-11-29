@@ -67,6 +67,7 @@ Formats:
 obj = common.fetch(fmt, fname):
 	### NOT IMPLEMENTED ###
 	Loads a file of a given format and returns the correct object.
+	Throws an error on failure.
 
 result = common.is_loaded(obj):
 	### NOT IMPLEMENTED ###
@@ -84,6 +85,23 @@ obj = common.block(obj):
 	Blocks execution until obj is fully loaded.
 	Throws an error if obj failed to load properly.
 	Returns the object you fed into it.
+
+#
+# Drawing
+#
+Image parameters are either a pointer to an image, or "nil" which refers to the screen.
+
+common.draw_rect_fill(img, x1, y1, x2, y2, color):
+	Draws an unblended filled rectangle
+	from (x1,y1) to (x2,y2) inclusive,
+	using an 0xAARRGGBB color,
+	to the image "img".
+
+common.draw_rect_outl(img, x1, y1, x2, y2, color):
+	Draws an unblended outlined rectangle
+	from (x1,y1) to (x2,y2) inclusive,
+	using an 0xAARRGGBB color,
+	to the image "img".
 
 #
 # Image handling

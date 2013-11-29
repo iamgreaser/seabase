@@ -180,6 +180,7 @@ void blit_sdl_to_sdl(
 
 // file.c
 char *file_get_direct(const char *fname, int *len);
+int file_sec_check(const char *fname, int is_client, int is_write);
 char *file_get(const char *fname, int *len);
 
 // img.c
@@ -190,6 +191,9 @@ img_t *img_new_ud(lua_State *L, int w, int h);
 
 // lua.c / lua_*.c
 ud_t *ud_get_block(lua_State *L, int typ, char *tname, int idx);
+int fl_fetch(lua_State *L);
+int fl_draw_rect_fill(lua_State *L);
+int fl_draw_rect_outl(lua_State *L);
 int fl_img_new(lua_State *L);
 int fl_img_load(lua_State *L);
 int fl_img_blit(lua_State *L);

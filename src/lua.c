@@ -59,3 +59,28 @@ ud_t *ud_get_block(lua_State *L, int typ, char *tname, int idx)
 	return ud;
 }
 
+/**
+	\brief Lua: Fetches a file, either locally or from the server.
+
+	\param fmt File format to load.
+	\param fname Name of file to load.
+
+	\return Object handle, usually a userdata.
+*/
+int fl_fetch(lua_State *L)
+{
+	int top = lua_gettop(L);
+	if(top < 2) return luaL_error(L, "not enough arguments for fetch");
+
+	const char *fmt = lua_tostring(L, 1);
+	const char *fname = lua_tostring(L, 2);
+
+	// TODO!
+	(void)fmt;
+	(void)fname;
+
+	luaL_error(L, "TODO: common.fetch");
+
+	return 1;
+}
+

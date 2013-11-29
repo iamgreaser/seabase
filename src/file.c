@@ -126,6 +126,25 @@ int file_sec_check(const char *fname, int is_client, int is_write)
 }
 
 /**
+	\brief Lua helper: Parse file data
+
+	\param L Lua state.
+	\param data Pointer to data.
+	\param len Length of data.
+	\param fmt Format of data.
+
+	\return Pushes the required object onto the Lua stack.
+*/
+void file_parse_any(lua_State *L, const char *data, int len, const char *fmt)
+{
+	// TODO!
+	(void)L;
+	(void)data;
+	(void)len;
+	(void)fmt;
+}
+
+/**
 	\brief Load a file using the appropriate method.
 
 	\param fname Name of file to be read.

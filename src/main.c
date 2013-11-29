@@ -152,6 +152,11 @@ int main(int argc, const char *argv[])
 	lua_newtable(L_client);
 	lua_newtable(L_server);
 
+	ADDFN(fl_fetch, "fetch");
+
+	ADDFN(fl_draw_rect_fill, "draw_rect_fill");
+	ADDFN(fl_draw_rect_outl, "draw_rect_outl");
+
 	ADDFN(fl_img_new, "img_new");
 	ADDFN(fl_img_load, "img_load");
 	ADDFN(fl_img_blit, "img_blit");
