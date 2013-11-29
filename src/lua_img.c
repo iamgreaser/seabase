@@ -24,7 +24,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 	\param w Width of image.
 	\param h Height of image.
 
-	\return Image userpointer.
+	\return Image userdata.
 */
 int fl_img_new(lua_State *L)
 {
@@ -52,7 +52,7 @@ int fl_img_new(lua_State *L)
 	\param fname Filename of image to load.
 	\param fmt File format (default: "png").
 
-	\return Image userpointer.
+	\return Image userdata.
 */
 int fl_img_blit(lua_State *L)
 {

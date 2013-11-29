@@ -18,16 +18,13 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 */
 #include "common.h"
 
-// TODO: kill this variable with fire
-extern map_t *map_client;
-
 /**
 	\brief Lua: Creates a map.
 
 	\param w Width of map.
 	\param h Height of map.
 
-	\return Map userpointer.
+	\return Map userdata.
 */
 int fl_map_new(lua_State *L)
 {
@@ -40,7 +37,23 @@ int fl_map_new(lua_State *L)
 	if(w <= 0 || h <= 0) return luaL_error(L, "invalid map dimensions %d x %d", w, h);
 
 	map_t *map = map_new_ud(L, w, h);
-	map_client = map;
+	(void)map;
 	return 1;
+}
+
+/**
+	\brief Lua: Perform an atmospherics simulation tick.
+
+	\param map Map to operate on.
+*/
+int fl_map_tick_atmos(lua_State *L)
+{
+	int top = lua_gettop(L);
+	if(top < 1) return luaL_error(L, "not enough arguments for fl_map_tick_atmos");
+
+	ud_t *ud = ud_get_block(L, UD_MAP, "map", 1);
+	map_tick_atmos((map_t *)(ud->v));
+
+	return 0;
 }
 

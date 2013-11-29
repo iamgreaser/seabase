@@ -22,7 +22,6 @@ SDL_Surface *real_screen;
 SDL_Surface *screen;
 lua_State *L_client;
 lua_State *L_server;
-map_t *map_client = NULL;
 map_t *map_server = NULL;
 int64_t time_current, time_prev;
 
@@ -158,6 +157,7 @@ int main(int argc, const char *argv[])
 	ADDFN(fl_img_blit, "img_blit");
 
 	ADDFN(fl_map_new, "map_new");
+	ADDFN(fl_map_tick_atmos, "map_tick_atmos");
 	ADDFN(fl_turf_get_type, "turf_get_type");
 	ADDFN(fl_turf_set_type, "turf_set_type");
 	ADDFN(fl_turf_reset_gas, "turf_reset_gas");
@@ -212,11 +212,6 @@ int main(int argc, const char *argv[])
 		} else {
 			printf("hook_tick DNE\n");
 			lua_pop(L_client, 1);
-		}
-
-		if(map_client != NULL)
-		{
-			map_tick_atmos(map_client);
 		}
 
 		// TODO: use pcall

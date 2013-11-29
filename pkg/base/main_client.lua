@@ -47,6 +47,15 @@ testlua = loadfile("pkg/base/test.lua")
 img_tiles = common.fetch("png", "pkg/base/gfx/hello.png")
 img_font = common.block(common.fetch("png", "pkg/base/gfx/font-mini.png"))
 
+function timer_new(fn, sec_base, interval)
+	return function(sec)
+		while sec > sec_base do
+			fn(sec_base)
+			sec_base = sec_base + interval
+		end
+	end
+end
+
 function puts(x, y, s)
 	local i
 	for i=1,#s do
@@ -122,7 +131,7 @@ for y=1,#test_map do
 end
 
 
-poop = 1
+poop = 5.0
 deadwall = math.floor(math.random() * #wall_list) + 1
 local x,y
 x = wall_list[deadwall][1]
@@ -194,12 +203,18 @@ function hook_render(sec_current, sec_delta)
 	puts(2, 2, s)
 end
 
+tmr_atmos = nil
 function hook_tick(sec_current, sec_delta)
 	set_sec_beg(sec_current)
 
-	poop = poop - 1
-	if poop <= 0 then
-		poop = 100
+	tmr_atmos = tmr_atmos or timer_new(function(sec)
+		common.map_tick_atmos(map)
+	end, sec_current, 1.0/20.0)
+
+	tmr_atmos(sec_current)
+	poop = poop - sec_delta
+	while poop <= 0 do
+		poop = poop + 5.0
 		local x, y
 		x = wall_list[deadwall][1]
 		y = wall_list[deadwall][2]

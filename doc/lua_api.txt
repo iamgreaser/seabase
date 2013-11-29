@@ -132,6 +132,9 @@ common.img_blit(img, dx, dy, flags, sx=0, sy=0, sw=width, sh=height, dest=nil):
 map = common.map_new(w, h):
 	Creates a new map used for atmospheric simulation.
 
+common.map_tick_atmos(map):
+	Perform an atmospherics simulation tick.
+
 #
 # Turf handling
 #

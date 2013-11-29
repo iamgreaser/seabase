@@ -203,6 +203,7 @@ int fl_draw_rect_outl(lua_State *L);
 int fl_img_new(lua_State *L);
 int fl_img_blit(lua_State *L);
 int fl_map_new(lua_State *L);
+int fl_map_tick_atmos(lua_State *L);
 int fl_turf_get_gas(lua_State *L);
 int fl_turf_set_gas(lua_State *L);
 int fl_turf_reset_gas(lua_State *L);
