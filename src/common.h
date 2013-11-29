@@ -93,9 +93,10 @@ enum
 enum
 {
 	UD_INVALID = 0,
+	UD_ANY, /// special type to indicate we can accept ANY block
 
-	UD_LOADING, // special type to indicate file is being fetched
-	UD_FAILED, // special type to indicate loading failed
+	UD_LOADING, /// special type to indicate file is being fetched
+	UD_FAILED, /// special type to indicate loading failed
 
 	UD_LUA,
 
@@ -194,6 +195,7 @@ img_t *img_new_ud(lua_State *L, int w, int h);
 
 // lua.c / lua_*.c
 ud_t *ud_get_block(lua_State *L, int typ, char *tname, int idx);
+int fl_call_proxy(lua_State *L);
 int fl_block(lua_State *L);
 int fl_fetch(lua_State *L);
 int fl_draw_rect_fill(lua_State *L);

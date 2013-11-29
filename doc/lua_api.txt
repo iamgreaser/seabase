@@ -82,7 +82,6 @@ result = common.is_failure(obj):
 	and false otherwise (even if it is still loading).
 
 obj = common.block(obj):
-	### NOT IMPLEMENTED ###
 	Blocks execution until obj is fully loaded.
 	Throws an error if obj failed to load properly.
 	Returns the object you fed into it.
