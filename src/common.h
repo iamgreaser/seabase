@@ -38,7 +38,13 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include <zlib.h>
 
 // for ntohs/ntohl
+#ifdef WIN32
+// Fuck you Windows.
+#define ntohs(x) ((uint16_t)((((uint16_t)(x))>>8)|(((uint16_t)(x))<<8)))
+#define ntohl(x) ((uint32_t)(((uint32_t)ntohs(((uint32_t)(x))>>16))|(((uint32_t)ntohs(x))<<16)))
+#else
 #include <netinet/in.h>
+#endif
 
 #define D_E 0x01
 #define D_S 0x02
@@ -227,6 +233,7 @@ void map_tick_atmos(map_t *map);
 img_t *img_load_png(const char *data, int len);
 
 // main.c
+void eprintf(const char *fmt, ...);
 extern SDL_Surface *screen;
 extern int is_client;
 

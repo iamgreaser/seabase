@@ -145,7 +145,7 @@ int fl_fetch(lua_State *L)
 		} break;
 		
 		default:
-			fprintf(stderr, "EDOOFUS: file_sec_check returned invalid enum!\n");
+			eprintf("EDOOFUS: file_sec_check returned invalid enum!\n");
 			fflush(stderr);
 			abort();
 	}

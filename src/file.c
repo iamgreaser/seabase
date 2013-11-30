@@ -183,7 +183,7 @@ char *file_get(const char *fname, int *len)
 					printf("forbidden %s\n", fname);
 					return NULL;
 				default:
-					fprintf(stderr, "EDOOFUS: file_sec_check returned invalid enum!\n");
+					eprintf("EDOOFUS: file_sec_check returned invalid enum!\n");
 					fflush(stderr);
 					abort();
 					return NULL;
@@ -192,7 +192,7 @@ char *file_get(const char *fname, int *len)
 			printf("forbidden %s\n", fname);
 			return NULL;
 		default:
-			fprintf(stderr, "EDOOFUS: file_sec_check returned invalid enum!\n");
+			eprintf("EDOOFUS: file_sec_check returned invalid enum!\n");
 			fflush(stderr);
 			abort();
 			return NULL;

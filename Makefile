@@ -1,4 +1,5 @@
-OBJDIR = build
+OBJDIR_ROOT = build
+OBJDIR = build/posix
 SRCDIR = src
 
 INCLUDES = src/common.h
@@ -22,24 +23,29 @@ OBJS = \
 
 CFLAGS = -g -O2 `sdl-config --cflags` -Wall -Wextra
 LDFLAGS = -g
-LIBS = -lm `sdl-config --libs` -llua-5.1 -lz -lenet
+LIBS_SDL = `sdl-config --libs`
+LIBS = -lm -llua-5.1 -lz -lenet $(LIBS_SDL)
 
 BINNAME = seabase
 
 MKDIR = mkdir
+MKDIR_F = mkdir -p
 RM = rm
-MKDIR_P = mkdir -p
+RM_F = rm -f
 
 all: $(BINNAME)
 
 clean:
-	rm -f $(OBJS)
+	$(RM_F) $(OBJS)
 
-$(BINNAME): $(OBJS) $(OBJDIR)
+$(BINNAME): $(OBJDIR) $(OBJS)
 	$(CC) -o $(BINNAME) $(LDFLAGS) $(OBJS) $(LIBS)
 
-$(OBJDIR):
-	$(MKDIR_P) $(OBJDIR)
+$(OBJDIR): $(OBJDIR_ROOT)
+	$(MKDIR_F) $(OBJDIR)
+
+$(OBJDIR_ROOT):
+	$(MKDIR_F) $(OBJDIR_ROOT)
 
 $(OBJDIR)/%.o: $(SRCDIR)/%.c $(INCLUDES)
 	$(CC) -c -o $@ $(CFLAGS) $<

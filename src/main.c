@@ -28,6 +28,26 @@ int64_t time_current, time_prev;
 int is_client = 1;
 
 /**
+	\brief Prints error info to stderr.
+
+	\param fmt Format string.
+*/
+void eprintf(const char *fmt, ...)
+{
+	va_list va;
+	va_start(va, fmt);
+
+#ifdef WIN32
+	// Fuck you Windows.
+	vprintf(fmt, va);
+#else
+	vfprintf(stderr, fmt, va);
+#endif
+
+	va_end(va);
+}
+
+/**
 	\brief Get the current time in microseconds.
 
 	\return Current time in microseconds.
@@ -109,7 +129,7 @@ void open_libs_lua(lua_State *L)
 	lua_pushcfunction(L, fl_wrap_loadfile); lua_setglobal(L, "loadfile");
 }
 
-int main(int argc, const char *argv[])
+int main(int argc, char *argv[])
 {
 	(void)argc;
 	(void)argv;

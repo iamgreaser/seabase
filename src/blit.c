@@ -96,7 +96,7 @@ void blit_raw(
 			}
 			break;
 		default:
-			fprintf(stderr, "PANIC: blit mode %i not supported!\n",
+			eprintf("PANIC: blit mode %i not supported!\n",
 				(flags & BF_M_AMODE));
 			fflush(stderr);
 			abort();

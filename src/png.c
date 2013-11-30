@@ -52,7 +52,7 @@ img_t *img_load_png(const char *data, int len)
 {
 	if(len < 8 || memcmp(data, "\x89PNG\x0D\x0A\x1A\x0A", 8))
 	{
-		fprintf(stderr, "img_load_png: PNG signature mismatch\n");
+		eprintf("img_load_png: PNG signature mismatch\n");
 		return NULL;
 	}
 
@@ -72,7 +72,7 @@ img_t *img_load_png(const char *data, int len)
 		// Get chunk region
 		if(dend - dfol < 12)
 		{
-			fprintf(stderr, "img_load_png: file truncated\n");
+			eprintf("img_load_png: file truncated\n");
 			if(idat_buf != NULL) free(idat_buf);
 			return NULL;
 		}
@@ -84,7 +84,7 @@ img_t *img_load_png(const char *data, int len)
 		
 		if((dend - dfol) < clen + 4)
 		{
-			fprintf(stderr, "img_load_png: file truncated\n");
+			eprintf("img_load_png: file truncated\n");
 			if(idat_buf != NULL) free(idat_buf);
 			return NULL;
 		}
@@ -95,7 +95,7 @@ img_t *img_load_png(const char *data, int len)
 
 		if(csum != realcsum)
 		{
-			fprintf(stderr, "img_load_png: checksum fail\n");
+			eprintf("img_load_png: checksum fail %08X %08X\n", csum, realcsum);
 			if(idat_buf != NULL) free(idat_buf);
 			return NULL;
 		}
@@ -114,7 +114,7 @@ img_t *img_load_png(const char *data, int len)
 		} else if(!memcmp(cname, "IHDR", 4)) {
 			if(clen != 13)
 			{
-				fprintf(stderr, "img_load_png: invalid IHDR length\n");
+				eprintf("img_load_png: invalid IHDR length\n");
 				if(idat_buf != NULL) free(idat_buf);
 				return NULL;
 			}
@@ -131,42 +131,42 @@ img_t *img_load_png(const char *data, int len)
 			if(img_w <= 0 || img_h <= 0 || img_w > 32768 || img_h > 32768
 				|| img_w * img_h > (2<<26))
 			{
-				fprintf(stderr, "img_load_png: image too large or contains a 0 dimension\n");
+				eprintf("img_load_png: image too large or contains a 0 dimension\n");
 				if(idat_buf != NULL) free(idat_buf);
 				return NULL;
 			}
 
 			if(img_bpc != 8)
 			{
-				fprintf(stderr, "img_load_png: only 8bpc images supported\n");
+				eprintf("img_load_png: only 8bpc images supported\n");
 				if(idat_buf != NULL) free(idat_buf);
 				return NULL;
 			}
 
 			if(img_ct != 6)
 			{
-				fprintf(stderr, "img_load_png: only RGBA images supported\n");
+				eprintf("img_load_png: only RGBA images supported\n");
 				if(idat_buf != NULL) free(idat_buf);
 				return NULL;
 			}
 
 			if(img_cm != 0)
 			{
-				fprintf(stderr, "img_load_png: invalid compression method\n");
+				eprintf("img_load_png: invalid compression method\n");
 				if(idat_buf != NULL) free(idat_buf);
 				return NULL;
 			}
 
 			if(img_im != 0)
 			{
-				fprintf(stderr, "img_load_png: interlacing not supported\n");
+				eprintf("img_load_png: interlacing not supported\n");
 				if(idat_buf != NULL) free(idat_buf);
 				return NULL;
 			}
 
 			if(img_fm != 0)
 			{
-				fprintf(stderr, "img_load_png: invalid filter method\n");
+				eprintf("img_load_png: invalid filter method\n");
 				if(idat_buf != NULL) free(idat_buf);
 				return NULL;
 			}
@@ -178,7 +178,7 @@ img_t *img_load_png(const char *data, int len)
 			idat_len += clen;
 
 		} else if(!(cname[0] & 0x20)) {
-			fprintf(stderr, "img_load_png: unhandled critical chunk %c%c%c%c\n"
+			eprintf("img_load_png: unhandled critical chunk %c%c%c%c\n"
 				, cname[0], cname[1], cname[2], cname[3]);
 			if(idat_buf != NULL) free(idat_buf);
 			return NULL;
@@ -189,12 +189,12 @@ img_t *img_load_png(const char *data, int len)
 	}
 
 	if(dend - dfol > 0)
-		fprintf(stderr, "img_load_png: warning: excess garbage in PNG file\n");
+		eprintf("img_load_png: warning: excess garbage in PNG file\n");
 
 	// TODO - create actual image
 	if(idat_buf == NULL)
 	{
-		fprintf(stderr, "img_load_png: no IDAT chunks in image\n");
+		eprintf("img_load_png: no IDAT chunks in image\n");
 		return NULL;
 	} else {
 		int unsize = (img_w*4+1)*img_h;
@@ -204,7 +204,7 @@ img_t *img_load_png(const char *data, int len)
 		if(uncompress((Bytef *)unpackbuf, &unlen, (Bytef *)idat_buf, idat_len)
 			|| unlen != (uLongf)unsize)
 		{
-			fprintf(stderr, "img_load_png: uncompressed size incorrect or unpack failure\n");
+			eprintf("img_load_png: uncompressed size incorrect or unpack failure\n");
 			free(unpackbuf);
 			free(idat_buf);
 			return NULL;
@@ -262,7 +262,7 @@ img_t *img_load_png(const char *data, int len)
 							fx[i] += pr;
 						} break;
 						default:
-							fprintf(stderr, "img_load_png: invalid filter\n");
+							eprintf("img_load_png: invalid filter\n");
 							free(unpackbuf);
 							free(idat_buf);
 							return NULL;
