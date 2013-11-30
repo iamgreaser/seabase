@@ -1,0 +1,10 @@
+asrc/
+build/
+
+.*.swp
+*.dll
+
+seabase
+seabase.exe
+winlibs
+

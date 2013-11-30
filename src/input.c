@@ -67,8 +67,8 @@ void input_mouse_get_lua(lua_State *L)
 void input_mouse_update_pos(lua_State *L, int x, int y)
 {
 	(void)L;
-	mouse_x = x;
-	mouse_y = y;
+	mouse_x = x/3;
+	mouse_y = y/3;
 }
 
 /**
@@ -85,8 +85,8 @@ void input_mouse_update_button(lua_State *L, int x, int y, int b, int state)
 	// Update state
 	if(state) mouse_b |=  (1<<b);
 	else      mouse_b &= ~(1<<b);
-	mouse_x = x;
-	mouse_y = y;
+	mouse_x = x/3;
+	mouse_y = y/3;
 
 	// Tell Lua
 	lua_getglobal(L, "hook_mouse");
@@ -94,8 +94,8 @@ void input_mouse_update_button(lua_State *L, int x, int y, int b, int state)
 	{
 		lua_remove(L, -1);
 	} else {
-		lua_pushinteger(L, x);
-		lua_pushinteger(L, y);
+		lua_pushinteger(L, mouse_x);
+		lua_pushinteger(L, mouse_y);
 		lua_pushinteger(L, b);
 		lua_pushboolean(L, state);
 		// TODO: pcall

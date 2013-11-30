@@ -18,119 +18,26 @@
   3. This notice may not be removed or altered from any source distribution.
 ]]
 
---[[
-Something to get your knickers in a knot about.
+-- TODO: wrap loadfile
 
-Type this into your shell.
-local b = "hi"; function a() { print(b) } a();
-
-This works fine in the Squirrel shell.
-However, this breaks horribly when you do it here.
-
-If I can't get that working soon, I'm going to dump Squirrel and move back to Lua,
-because this is just complete horseshit.
-
---GM
-
-OK, porting to Lua because fuck Squirrel.
-
---GM
-
-]]
-BF_M_AMODE  = 0x00000003
-BF_AM_DIRECT   = 0x00000000
-BF_AM_THRES    = 0x00000001
-BF_AM_BLEND    = 0x00000002
-BF_AM_DITHER   = 0x00000003
-
-testlua = loadfile("pkg/base/test.lua")
+-- load images
 img_tiles = common.fetch("png", "pkg/base/gfx/hello.png")
-img_font = common.block(common.fetch("png", "pkg/base/gfx/font-mini.png"))
+img_font = common.fetch("png", "pkg/base/gfx/font-mini.png")
 
-function timer_new(fn, sec_base, interval)
-	return function(sec)
-		while sec > sec_base do
-			fn(sec_base)
-			sec_base = sec_base + interval
-		end
-	end
-end
+-- preload libraries
+local k,v
+local libload = {}
+for k,v in pairs({
+	"pkg/base/constants.lua",
+	"pkg/base/lib/gui.lua",
+	"pkg/base/lib/timer.lua",
+	"pkg/base/obj/door.lua",
+}) do libload[k] = loadfile(v) end
 
-function door_new(cfg)
-	local this = {
-		x = cfg.x, y = cfg.y,
+-- run libraries
+for k,v in pairs(libload) do v() end
 
-		tmr_openclose = nil,
-		openness = 0,
-		open_state = false,
-		opening = false,
-		closing = false,
-	}
-
-	--map_vis[this.y][this.x] = TURF.FLOOR
-
-	this.this = this
-
-	function this.f_open()
-		this.openness = this.openness + 1
-		if this.openness > 7 then
-			this.openness = 7
-			this.open_state = true
-			this.opening = false
-			this.tmr_openclose = nil
-			common.turf_set_type(map, this.x, this.y, TURF.FLOOR)
-		end
-	end
-
-	function this.f_close()
-		this.openness = this.openness - 1
-		if this.openness < 0 then
-			this.openness = 0
-			this.open_state = false
-			this.closing = false
-			this.tmr_openclose = nil
-			common.turf_set_type(map, this.x, this.y, TURF.WALL)
-		end
-	end
-
-	function this.tick(sec_current, sec_delta)
-		if this.tmr_openclose then
-			this.tmr_openclose(sec_current, sec_delta)
-		end
-	end
-
-	function this.open(sec_current)
-		if (not this.open_state) or (this.closing) then
-			this.closing = false
-			this.opening = true
-			this.tmr_openclose = timer_new(this.f_open, sec_current, 1.0/8.0)
-		end
-	end
-
-	function this.close(sec_current)
-		if (this.open_state) or (this.opening) then
-			this.opening = false
-			this.closing = true
-			this.tmr_openclose = timer_new(this.f_close, sec_current, 1.0/8.0)
-		end
-	end
-
-	function this.draw(sec_current, sec_delta, bx, by)
-		common.img_blit(img_tiles, bx, by, BF_AM_THRES,
-			16*this.openness, 16*3, 16, 16)
-	end
-
-	return this
-end
-
-function puts(x, y, s)
-	local i
-	for i=1,#s do
-		local c = s:byte(i) - 0x20
-		common.img_blit(img_font, x, y, BF_AM_THRES, c*6, 0, 6, 8)
-		x = x + 6
-	end
-end
+testlua = loadfile("pkg/base/test.lua") -- regression testing
 
 local test_map = {
 	"     ####           ",
@@ -146,21 +53,6 @@ local test_map = {
 	"   #...........=    ",
 	"   #...........=    ",
 	"   #############    ",
-}
-
-TURF = {
-	WATER = 0,
-	FLOOR = 1,
-	WALL = 2,
-}
-
-GAS = {
-	WATER = 0,
-
-	O2 = 1,
-	N2 = 2,
-	CO2 = 3,
-	CH4 = 4,
 }
 
 test_map_trn = {
