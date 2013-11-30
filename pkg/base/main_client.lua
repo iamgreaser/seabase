@@ -56,6 +56,71 @@ function timer_new(fn, sec_base, interval)
 	end
 end
 
+function door_new(cfg)
+	local this = {
+		x = cfg.x, y = cfg.y,
+
+		tmr_openclose = nil,
+		openness = 0,
+		open_state = false,
+		opening = false,
+		closing = false,
+	}
+
+	this.this = this
+
+	function this.f_open()
+		this.openness = this.openness + 1
+		if this.openness > 7 then
+			this.openness = 7
+			this.open_state = true
+			this.opening = false
+			this.tmr_openclose = nil
+			common.turf_set_type(map, this.x, this.y, TURF.FLOOR)
+		end
+	end
+
+	function this.f_close()
+		this.openness = this.openness - 1
+		if this.openness < 0 then
+			this.openness = 0
+			this.open_state = false
+			this.closing = false
+			this.tmr_openclose = nil
+			common.turf_set_type(map, this.x, this.y, TURF.WALL)
+		end
+	end
+
+	function this.tick(sec_current, sec_delta)
+		if this.tmr_openclose then
+			this.tmr_openclose(sec_current, sec_delta)
+		end
+	end
+
+	function this.open(sec_current)
+		if (not this.open_state) or (this.closing) then
+			this.closing = false
+			this.opening = true
+			this.tmr_openclose = timer_new(this.f_open, sec_current, 1.0/8.0)
+		end
+	end
+
+	function this.close(sec_current)
+		if (this.open_state) or (this.opening) then
+			this.opening = false
+			this.closing = true
+			this.tmr_openclose = timer_new(this.f_close, sec_current, 1.0/8.0)
+		end
+	end
+
+	function this.draw(sec_current, sec_delta, bx, by)
+		common.img_blit(img_tiles, bx, by, BF_AM_THRES,
+			16*this.openness, 16*3, 16, 16)
+	end
+
+	return this
+end
+
 function puts(x, y, s)
 	local i
 	for i=1,#s do
@@ -70,15 +135,15 @@ local test_map = {
 	"     #..#           ",
 	"     #..#           ",
 	"  ####..#           ",
-	"  #.....#           ",
-	"  #######           ",
+	"  =.=...#           ",
+	"  #####=#           ",
 	"     #..####        ",
-	"     #.$...#        ",
+	"     #.$.=.=        ",
 	"     #..####        ",
-	"   ########         ",
-	"   #......#         ",
-	"   #......#         ",
-	"   ########         ",
+	"   ###=#########    ",
+	"   #...........=    ",
+	"   #...........=    ",
+	"   #############    ",
 }
 
 TURF = {
@@ -101,8 +166,18 @@ test_map_trn = {
 	["."] = TURF.FLOOR,
 	["$"] = TURF.FLOOR,
 	["#"] = TURF.WALL,
+	["="] = TURF.WALL,
 }
 
+map_walls = {}
+map_doors = {}
+local i
+for i=1,128 do
+	map_walls[i] = {}
+	map_doors[i] = {}
+end
+
+door_list = {}
 wall_list = {}
 
 -- Lua is 1-based. Ugh. But we'll cope.
@@ -122,6 +197,12 @@ for y=1,#test_map do
 
 		if ctype == TURF.WALL then
 			wall_list[#wall_list+1] = {x, y}
+			map_walls[y][x] = true
+			if c == "=" then
+				local door = door_new {x = x, y = y}
+				door_list[#door_list+1] = door
+				map_doors[y][x] = door
+			end
 		end
 
 		if c == "$" then
@@ -132,12 +213,8 @@ for y=1,#test_map do
 end
 
 
-poop = 3.0
-deadwall = math.floor(math.random() * #wall_list) + 1
-local x,y
-x = wall_list[deadwall][1]
-y = wall_list[deadwall][2]
-common.turf_set_type(map, x, y, TURF.FLOOR)
+poop = 0.2
+deadwall = nil
 
 local sec_beg = nil
 
@@ -159,6 +236,7 @@ function hook_render(sec_current, sec_delta)
 		local typ = common.turf_get_type(map, x, y)
 		local water = common.turf_get_gas(map, x, y, GAS.WATER)
 		
+		local door = map_doors[y][x]
 		if typ == TURF.WATER then
 			tx, ty = 0, 0
 		elseif typ == TURF.FLOOR then
@@ -182,9 +260,14 @@ function hook_render(sec_current, sec_delta)
 			common.img_blit(img_tiles, (x-1)*16, (y-1)*16, BF_AM_THRES,
 				16*tx, 16*ty, 16, 16)
 		end
+
 		if water >= 0 then
 			common.img_blit(img_tiles, (x-1)*16, (y-1)*16, BF_AM_THRES,
 				16*water, 16*1, 16, 16)
+		end
+
+		if door then
+			door.draw(sec_current, sec_delta, (x-1)*16, (y-1)*16)
 		end
 	end
 	end
@@ -192,10 +275,13 @@ function hook_render(sec_current, sec_delta)
 	local xbase = ((sec_current - sec_beg) % 5.0) / 5.0
 	xbase = xbase * (320 + 2*100)
 	xbase = xbase - 100
-	local x = wall_list[deadwall][1] - 100/32
-	local y = wall_list[deadwall][2] - 100/32
-	common.img_blit(nil, 320-100, 0, BF_AM_THRES,
-		(x-1)*16, (y-1)*16, 100, 100, nil)
+	if deadwall then
+		local door = door_list[deadwall]
+		local x = door.x - 100/32
+		local y = door.y - 100/32
+		common.img_blit(nil, 320-100, 0, BF_AM_THRES,
+			(x-1)*16, (y-1)*16, 100, 100, nil)
+	end
 	
 
 	local s = "All systems nominal."
@@ -214,20 +300,28 @@ function hook_tick(sec_current, sec_delta)
 			common.turf_get_gas(map, drain_x, drain_y, GAS.WATER) * 0.8)
 	end, sec_current, 1.0/50.0)
 
+	local i
+	for i=1,#door_list do
+		local door = door_list[i]
+		door.tick(sec_current, sec_delta)
+	end
+
 	tmr_atmos(sec_current)
 	poop = poop - sec_delta
 	while poop <= 0 do
 		poop = poop + 3.0
 		local x, y
-		x = wall_list[deadwall][1]
-		y = wall_list[deadwall][2]
-		common.turf_set_type(map, x, y, TURF.WALL)
-		common.turf_reset_gas(map, x, y)
+		local door
 
-		deadwall = math.floor(math.random() * #wall_list) + 1
-		x = wall_list[deadwall][1]
-		y = wall_list[deadwall][2]
-		common.turf_set_type(map, x, y, TURF.FLOOR)
+		if deadwall then
+			door = door_list[deadwall]
+			door.close(sec_current)
+		end
+
+		deadwall = math.floor(math.random() * #door_list) + 1
+		door = door_list[deadwall]
+		x, y = door.x, door.y
+		door.open(sec_current)
 	end
 
 end
