@@ -334,6 +334,11 @@ function hook_tick(sec_current, sec_delta)
 
 end
 
+function hook_mouse(x, y, button, state)
+	print("mouse", x, y, button, state)
+	print("more crap", common.mouse_get())
+end
+
 print(testlua("this", 3.14, "meow"))
 print(testlua("arsethis", 3.14, "meow"))
 

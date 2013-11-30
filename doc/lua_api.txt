@@ -54,8 +54,16 @@ hook_tick = fn(sec_current, sec_delta):
 #
 # Client hooks
 #
-hook_render = fn(sec_current, sec_delta):
+hook_render = function(sec_current, sec_delta):
 	Called every time the screen needs to be redrawn.
+
+hook_mouse = function(x, y, button, state):
+	Called every time a mouse button changes state.
+	x, y are the position where the mouse changed state.
+
+hook_mouse_focus = function(state):
+	### NOT IMPLEMENTED ###
+	Called every time the mouse enters (true) or leaves (false) the window.
 
 #
 # File handling
@@ -134,6 +142,26 @@ map = common.map_new(w, h):
 
 common.map_tick_atmos(map):
 	Perform an atmospherics simulation tick.
+
+#
+# Mouse input
+#
+Note, button state is an integer.
+	To get to each bit one can do this (X being 0-based):
+		local button_X_pressed = (b % (2^(X+1))) >= (2^X) -- in Lua
+		button_X_pressed = b & (1 << X); // in C
+	
+	You should have access to a pure Lua library to do this crap for you.
+
+Button state indices:
+	MOUSE_LEFT = 0
+	MOUSE_MIDDLE = 1
+	MOUSE_RIGHT = 2
+	MOUSE_SCROLLUP = 3
+	MOUSE_SCROLLDN = 4
+
+x, y, dx, dy, b = common.mouse_get():
+	Returns the x, y, delta x, delta y, and button state of the mouse.
 
 #
 # Turf handling

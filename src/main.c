@@ -158,6 +158,9 @@ int main(int argc, const char *argv[])
 
 	ADDFN(fl_map_new, "map_new");
 	ADDFN(fl_map_tick_atmos, "map_tick_atmos");
+
+	ADDFN(fl_mouse_get, "mouse_get");
+
 	ADDFN(fl_turf_get_type, "turf_get_type");
 	ADDFN(fl_turf_set_type, "turf_set_type");
 	ADDFN(fl_turf_reset_gas, "turf_reset_gas");
@@ -252,6 +255,17 @@ int main(int argc, const char *argv[])
 		{
 			case SDL_QUIT:
 				quitflag = 1;
+				break;
+			case SDL_MOUSEBUTTONUP:
+			case SDL_MOUSEBUTTONDOWN:
+				input_mouse_update_button(L_client,
+					ev.button.x, ev.button.y,
+					ev.button.button - 1,
+					ev.type == SDL_MOUSEBUTTONDOWN);
+				break;
+			case SDL_MOUSEMOTION:
+				input_mouse_update_pos(L_client,
+					ev.motion.x, ev.motion.y);
 				break;
 		}
 	}

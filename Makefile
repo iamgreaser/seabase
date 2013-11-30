@@ -6,10 +6,12 @@ OBJS = \
 	$(OBJDIR)/blit.o \
 	$(OBJDIR)/file.o \
 	$(OBJDIR)/img.o \
+	$(OBJDIR)/input.o \
 	$(OBJDIR)/lua.o \
 	$(OBJDIR)/lua_draw.o \
 	$(OBJDIR)/lua_fetch.o \
 	$(OBJDIR)/lua_img.o \
+	$(OBJDIR)/lua_input.o \
 	$(OBJDIR)/lua_map.o \
 	$(OBJDIR)/lua_turf.o \
 	$(OBJDIR)/map.o \

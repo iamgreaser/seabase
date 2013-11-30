@@ -193,6 +193,11 @@ img_t *img_new(int w, int h);
 ud_t *img_provide_ud(lua_State *L, img_t *img);
 img_t *img_new_ud(lua_State *L, int w, int h);
 
+// iiiiinnnnpuuuuuuuuuuuhhhhht.........c
+void input_mouse_get_lua(lua_State *L);
+void input_mouse_update_pos(lua_State *L, int x, int y);
+void input_mouse_update_button(lua_State *L, int x, int y, int b, int state);
+
 // lua.c / lua_*.c
 ud_t *ud_get_block(lua_State *L, int typ, char *tname, int idx);
 int fl_call_proxy(lua_State *L);
@@ -204,6 +209,7 @@ int fl_img_new(lua_State *L);
 int fl_img_blit(lua_State *L);
 int fl_map_new(lua_State *L);
 int fl_map_tick_atmos(lua_State *L);
+int fl_mouse_get(lua_State *L);
 int fl_turf_get_gas(lua_State *L);
 int fl_turf_set_gas(lua_State *L);
 int fl_turf_reset_gas(lua_State *L);
