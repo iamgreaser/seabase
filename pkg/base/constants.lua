@@ -39,3 +39,15 @@ GAS = {
 	CH4 = 4,
 }
 
+DIR = {
+	E = 0x01,
+	S = 0x02,
+	W = 0x04,
+	N = 0x08,
+
+	EAST = 0x01,
+	SOUTH = 0x02,
+	WEST = 0x04,
+	NORTH = 0x08,
+}
+

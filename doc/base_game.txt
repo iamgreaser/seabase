@@ -1,0 +1,114 @@
+
+pkg/base/main_client.lua:
+	Entry point for the client.
+
+pkg/base/main_server.lua:
+	Entry point for the server.
+
+pkg/base/constants.lua:
+	Contains some useful constants so you don't have to redeclare them.
+
+pkg/base/test.lua:
+	Test program to ensure that we don't break the deferred loading crap.
+
+pkg/base/lib/*:
+	Various libraries you can (and should!) use.
+
+pkg/base/obj/*:
+	A great place to put in-game objects.
+
+	All objects should follow this format:
+
+	pkg/base/obj/foo/bar/bazzles.lua:
+		function foo_bar_bazzles_new(cfg)
+			local this = {
+				-- Stick some defaults in here,
+				-- typically stuff based on the list "cfg".
+			}
+
+			this.this = this
+
+			-- Put functions in here and stuff like that.
+			-- Here's an example.
+
+			function this.honk(user)
+				if user.job == JOBS.CLOWN then
+					find_singularity().unleash()
+				end
+			end
+
+			return this
+		end
+	
+	Or, of course, if you wish to extend a "class":
+
+	pkg/base/obj/foo/bar/bazlet.lua:
+		function foo_bar_bazlet_new(cfg)
+			-- You can filter cfg if you want.
+			local this = foo_bar_bazzles_new(cfg)
+
+			-- You might want to do some changes to "this" here.
+
+			-- Put functions in here and stuff like that.
+			-- Here's an example of how to override a function.
+			local s_honk = this.honk
+			function this.honk(user, ...)
+				-- *ALWAYS* use "..." at the end of an extended function.
+				-- The underlying function may tack stuff onto the end.
+				-- Still, some API changes will require you to update stuff.
+
+				-- It's OK to modify global state for one function,
+				-- PROVIDED that you restore it afterwards.
+
+				local s_job = user.job
+				user.job = JOBS.CLOWN
+
+				-- Also, ALWAYS catch the return.
+				-- This is probably the best way to do it,
+				-- as it respects varargs.
+				--
+				-- Of course, if you don't need to do anything after the call,
+				-- it should be fine to just do "return s_honk(user, ...)".
+				return (function (...)
+					-- Anything after the function call goes here.
+					user.job = s_job
+					return ...
+				end)(s_honk(user, ...))
+			end
+
+			return this
+		end
+	
+	Functions which MUST be defined follow.
+	
+	tick(sec_current, sec_delta):
+		Called every time hook_tick is called.
+	
+	draw(sec_current, sec_delta, bx, by):
+		Called every time hook_render wants to draw this object.
+		bx, by are the screen coordinates of the top-left corner
+		of this object's tile.
+
+pkg/base/lib/gui.lua:
+	GUI functions.
+
+	puts(x, y, str):
+		Draws the string str at x, y on the screen,
+		using the font img_font.
+
+pkg/base/lib/timer.lua:
+	Timer functions.
+
+pkg/base/obj/door.lua:
+	door = door_new {
+		x, y,
+	}
+
+	Functions for doors follow.
+
+	door.open(sec_current):
+		Opens the door.
+
+	door.close(sec_current):
+		Closes the door.
+
