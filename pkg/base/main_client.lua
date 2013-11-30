@@ -67,6 +67,8 @@ function door_new(cfg)
 		closing = false,
 	}
 
+	--map_vis[this.y][this.x] = TURF.FLOOR
+
 	this.this = this
 
 	function this.f_open()
@@ -171,10 +173,15 @@ test_map_trn = {
 
 map_walls = {}
 map_doors = {}
-local i
+map_vis = {}
+local i,j
 for i=1,128 do
 	map_walls[i] = {}
 	map_doors[i] = {}
+	map_vis[i] = {}
+	for j=1,128 do
+		map_vis[i][j] = TURF.WATER
+	end
 end
 
 door_list = {}
@@ -192,6 +199,7 @@ for y=1,#test_map do
 		local c = s:sub(x,x)
 		local ctype = test_map_trn[c]
 		--print(x, y, c, ctype)
+		map_vis[y][x] = ctype
 		common.turf_set_type(map, x, y, ctype)
 		common.turf_reset_gas(map, x, y)
 
@@ -233,21 +241,21 @@ function hook_render(sec_current, sec_delta)
 	for y=1,math.min(1+13-1,#test_map) do
 	for x=1,math.min(1+20-1,#(test_map[1])) do
 		local tx, ty
-		local typ = common.turf_get_type(map, x, y)
+		local typ = map_vis[y][x]
 		local water = common.turf_get_gas(map, x, y, GAS.WATER)
 		
 		local door = map_doors[y][x]
 		if typ == TURF.WATER then
 			tx, ty = 0, 0
-		elseif typ == TURF.FLOOR then
+		elseif door or typ == TURF.FLOOR then
 			tx, ty = 1, 0
 		elseif typ == TURF.WALL then
 			tx, ty = 0, 2
 			water = 0
-			local t0 = (x >= #(test_map[1]) and TURF.WATER) or common.turf_get_type(map, x+1, y)
-			local t1 = (y >= #test_map and TURF.WATER) or common.turf_get_type(map, x, y+1)
-			local t2 = (x <= 1 and TURF.WATER) or common.turf_get_type(map, x-1, y)
-			local t3 = (y <= 1 and TURF.WATER) or common.turf_get_type(map, x, y-1)
+			local t0 = (x >= #(test_map[1]) and TURF.WATER) or map_vis[y][x+1]
+			local t1 = (y >= #test_map and TURF.WATER) or map_vis[y+1][x]
+			local t2 = (x <= 1 and TURF.WATER) or map_vis[y][x-1]
+			local t3 = (y <= 1 and TURF.WATER) or map_vis[y-1][x]
 			
 			if t0 == TURF.WALL then tx = tx + 1 end
 			if t1 == TURF.WALL then tx = tx + 2 end
