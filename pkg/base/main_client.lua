@@ -125,6 +125,11 @@ function set_sec_beg(sec)
 	end
 end
 
+whello = widget.box {
+	nomw = 100, nomh = 40,
+}
+whello.pack()
+
 function hook_render(sec_current, sec_delta)
 	local x,y
 	local mx, my, _, mb
@@ -175,6 +180,8 @@ function hook_render(sec_current, sec_delta)
 	end
 	end
 
+	whello.draw(50, 20)
+
 	local cx, cy
 	cx = math.floor(mx/16)+1
 	cy = math.floor(my/16)+1
@@ -184,18 +191,13 @@ function hook_render(sec_current, sec_delta)
 	local xbase = ((sec_current - sec_beg) % 5.0) / 5.0
 	xbase = xbase * (320 + 2*100)
 	xbase = xbase - 100
-	if deadwall then
+	if false and deadwall then
 		local door = door_list[deadwall]
 		local x = door.x - 100/32
 		local y = door.y - 100/32
 		common.img_blit(nil, 320-100, 0, BF_AM_THRES,
 			(x-1)*16, (y-1)*16, 100, 100, nil)
 	end
-
-	local s = "All systems nominal."
-	common.draw_rect_fill(nil, 0, 0, 4 + 6*#s, 12, 0xFF225522)
-	common.draw_rect_outl(nil, 0, 0, 4 + 6*#s, 12, 0xFF88AA88)
-	puts(2, 2, s)
 end
 
 tmr_atmos = nil

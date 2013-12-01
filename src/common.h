@@ -212,6 +212,7 @@ int fl_fetch(lua_State *L);
 int fl_draw_rect_fill(lua_State *L);
 int fl_draw_rect_outl(lua_State *L);
 int fl_img_new(lua_State *L);
+int fl_img_get_dims(lua_State *L);
 int fl_img_blit(lua_State *L);
 int fl_map_new(lua_State *L);
 int fl_map_tick_atmos(lua_State *L);

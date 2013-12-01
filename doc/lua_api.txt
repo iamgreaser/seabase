@@ -125,6 +125,7 @@ img = common.img_new(w, h):
 
 w, h = common.img_get_dims(img):
 	Returns the dimensions of an image.
+	If img is nil, return the screen dimensions.
 
 common.img_blit(img, dx, dy, flags, sx=0, sy=0, sw=width, sh=height, dest=nil):
 	Blits an image to/from either the screen or another image.

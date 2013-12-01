@@ -42,6 +42,33 @@ int fl_img_new(lua_State *L)
 }
 
 /**
+	\brief Lua: Gets an image's dimensions.
+
+	\param img Image.
+
+	\return w, h dimensions.
+*/
+int fl_img_get_dims(lua_State *L)
+{
+	int top = lua_gettop(L);
+	if(top < 1) return luaL_error(L, "not enough arguments for img_get_dims");
+
+	if(lua_isnil(L, 1))
+	{
+		lua_pushinteger(L, screen->w);
+		lua_pushinteger(L, screen->h);
+		return 2;
+	}
+
+	ud_t *img_ud = ud_get_block(L, UD_IMG, "img", 1);
+	img_t *img = (img_t *)img_ud;
+	
+	lua_pushinteger(L, img->w);
+	lua_pushinteger(L, img->h);
+	return 2;
+}
+
+/**
 	\brief Lua: Blits from an image/the screen to an image/the screen.
 	
 	Blitting to/from the screen on the server will throw a Lua error.
