@@ -20,6 +20,7 @@
 
 function timer_new(fn, sec_base, interval)
 	return function(sec)
+		sec_base = sec_base or sec
 		while sec > sec_base do
 			fn(sec_base)
 			sec_base = sec_base + interval

@@ -132,28 +132,46 @@ function popup_clear()
 end
 
 function popup_do(x, y)
+	local items = {}
+
+	local function addi(text, fn)
+		items[#items+1] = wchild(widget.box {
+			children = { wchild(widget.text {u_text = text}) },
+			ev_mouse_button = function(bx, by, ax, ay, button, state)
+				if not state then
+					return fn(button)
+				end
+			end})
+	end
+
+	local cx, cy = math.floor(x/16)+1, math.floor(y/16)+1
+	local door = map_doors[cy][cx] 
+	local typ = common.turf_get_type(map, cx, cy)
+
+	if door then
+		addi("Examine", function () print("EX: It's a door.\nIt opens and closes.") end)
+		addi("Open", function () door.open() end)
+		addi("Close", function () door.close() end)
+	elseif typ == TURF.WATER then
+		addi("Examine", function () print("EX: It's water.\nKeep out of reach of batteries.") end)
+	elseif typ == TURF.FLOOR then
+		addi("Examine", function () print("EX: It's a floor.") end)
+	elseif typ == TURF.WALL then
+		addi("Examine", function () print("EX: It's a wall.") end)
+	end
+
 	local this = widget.box {
 		maxw = 100,
 		layout = widget.layouts.vbox_flow {},
-		children = {
-			wchild(widget.box { children = { wchild(widget.text {u_text = "Examine"})},
-				ev_mouse_button = function(bx, by, ax, ay, button, state)
-					print("examine clicked", button, state)
-				end}),
-			wchild(widget.box { children = { wchild(widget.text {u_text = "Open"})},
-				ev_mouse_button = function(bx, by, ax, ay, button, state)
-					print("open clicked", button, state)
-				end}),
-			wchild(widget.box { children = { wchild(widget.text {u_text = "Close"})},
-				ev_mouse_button = function(bx, by, ax, ay, button, state)
-					print("close clicked", button, state)
-				end}),
-		},
+		children = items,
 	}
 
 	this.u_x = x
 	this.u_y = y
 	this.pack()
+	local sw, sh = common.img_get_dims(nil)
+	if this.h + this.u_y > sh then this.u_y = sh - this.h end
+	if this.w + this.u_x > sw then this.u_x = sw - this.w end
 	wpopups[#wpopups + 1] = this
 end
 
@@ -247,7 +265,7 @@ function hook_tick(sec_current, sec_delta)
 	end
 
 	tmr_atmos(sec_current)
-	poop = poop - sec_delta
+	--poop = poop - sec_delta
 	while poop <= 0 do
 		poop = poop + 3.0
 		local x, y
@@ -268,14 +286,19 @@ end
 
 function hook_mouse(x, y, button, state)
 	if button == 2 then
-		popup_do(x, y)
-	else
-		local _,wi
-		for _,wi in pairs(wpopups) do
-			widget_mouse_button(wi, wi.u_x, wi.u_y, x, y, button, state)
+		if state then
+			popup_clear()
+			popup_do(x, y)
 		end
+	else
+		if not state then
+			local _,wi
+			for _,wi in pairs(wpopups) do
+				widget_mouse_button(wi, wi.u_x, wi.u_y, x, y, button, state)
+			end
 
-		popup_clear()
+			popup_clear()
+		end
 	end
 end
 
