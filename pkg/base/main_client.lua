@@ -125,35 +125,37 @@ function set_sec_beg(sec)
 	end
 end
 
-whello = widget.box {
-	maxw = 100,
-	children = {
-		{cfg = {}, child = widget.box {
-			children = {
-				{cfg = {}, child = widget.text {
-					u_text = "Hello BYOND!",
-				}},
-			},
-		}},
-		{cfg = {}, child = widget.box {
-			nomw = 40, nomh = 60,
-			children = {
-				{cfg = {}, child = widget.text {
-					u_text = "txt",
-				}},
-			},
-		}},
-		{cfg = {}, child = widget.box {
-			nomw = 40, nomh = 60,
-			children = {
-				{cfg = {}, child = widget.text {
-					u_text = "butt",
-				}},
-			},
-		}},
-	},
-}
-whello.pack()
+wpopups = {}
+
+function popup_clear()
+	wpopups = {}
+end
+
+function popup_do(x, y)
+	local this = widget.box {
+		maxw = 100,
+		layout = widget.layouts.vbox_flow {},
+		children = {
+			wchild(widget.box { children = { wchild(widget.text {u_text = "Examine"})},
+				ev_mouse_button = function(bx, by, ax, ay, button, state)
+					print("examine clicked", button, state)
+				end}),
+			wchild(widget.box { children = { wchild(widget.text {u_text = "Open"})},
+				ev_mouse_button = function(bx, by, ax, ay, button, state)
+					print("open clicked", button, state)
+				end}),
+			wchild(widget.box { children = { wchild(widget.text {u_text = "Close"})},
+				ev_mouse_button = function(bx, by, ax, ay, button, state)
+					print("close clicked", button, state)
+				end}),
+		},
+	}
+
+	this.u_x = x
+	this.u_y = y
+	this.pack()
+	wpopups[#wpopups + 1] = this
+end
 
 function hook_render(sec_current, sec_delta)
 	local x,y
@@ -205,7 +207,10 @@ function hook_render(sec_current, sec_delta)
 	end
 	end
 
-	whello.draw(150, 20)
+	local _,wi
+	for _,wi in pairs(wpopups) do
+		wi.draw(wi.u_x, wi.u_y)
+	end
 
 	local cx, cy
 	cx = math.floor(mx/16)+1
@@ -262,8 +267,16 @@ function hook_tick(sec_current, sec_delta)
 end
 
 function hook_mouse(x, y, button, state)
-	print("mouse", x, y, button, state)
-	print("more crap", common.mouse_get())
+	if button == 2 then
+		popup_do(x, y)
+	else
+		local _,wi
+		for _,wi in pairs(wpopups) do
+			widget_mouse_button(wi, wi.u_x, wi.u_y, x, y, button, state)
+		end
+
+		popup_clear()
+	end
 end
 
 print(testlua("this", 3.14, "meow"))

@@ -129,11 +129,19 @@ widget.layouts = {}
 
 		this.w and this.h are already set for you by this point.
 
+	caught = this.on_mouse_button(bx, by, ax, ay, button, state):
+		Indicates a mouse button press/release.
+		Returns true if the click was caught.
+
+		For transferring to children at (sx, sy), do this:
+			child.on_mouse_button(bx - sx, by - sy, ax, ay, button, state)
+
+		The default method calls on_mouse_button on its layout (if any exists),
+		and if that fails then it calls ev_mouse_button if it exists.
+		Failing THAT, it returns false.
+
 	Functions to override:
 
-	this.on_mouse_button(parent, bx, by, ax, ay, button, state):
-		Indicates a mouse button press/release.
-		
 	this.on_draw(parent, img, bx, by, bw, bh, ax, ay):
 		Draws on the image img,
 		at top-left corner bx,by,
@@ -154,6 +162,7 @@ function widget_new(cfg)
 		layout = cfg.layout,
 		cbg = cfg.cbg, cborder = cfg.cborder, ctext = cfg.ctext,
 		parent = nil,
+		ev_mouse_button = cfg.ev_mouse_button,
 	}; this.this = this
 
 	if this.w then
@@ -247,6 +256,11 @@ function widget_new(cfg)
 	end
 
 	-- Stuff to override
+	function this.on_mouse_button(...)
+		return (this.layout and this.layout.on_mouse_button(...))
+			or (this.ev_mouse_button and this.ev_mouse_button(...))
+	end
+
 	function this.on_pack(minw, minh, maxw, maxh, expand, ...)
 		-- Sane default
 		local w, h 
@@ -309,7 +323,7 @@ function widget.layouts.hbox_flow(cfg)
 		}
 	end
 
-	function this.make_child_layout(minw, minh, maxw, maxh)
+	function this.make_child_layout(minw, minh, maxw, maxh, expand)
 		local _,child
 		local nw,nh = 0,0
 		local x,y = 0,0
@@ -326,13 +340,13 @@ function widget.layouts.hbox_flow(cfg)
 				next_y = cs.h
 				cs.x = 0
 				cs.y = y
-				x = cs.w + 1
+				x = cs.w
 			else
 				cs.x = x + 1
 				if x == 0 then cs.x = 0 end
 				cs.y = y
 				next_y = math.max(next_y, cs.h)
-				x = x + cs.w + 1
+				x = cs.x + cs.w
 				nw = x
 			end
 			nh = math.max(nh, math.min(maxh or (y + cs.h), y + cs.h))
@@ -343,12 +357,28 @@ function widget.layouts.hbox_flow(cfg)
 		return nw, nh
 	end
 
+	function this.on_mouse_button(bx, by, ax, ay, button, state, ...)
+		for _,cs in pairs(this.children) do
+			local child = cs.child
+			local in_range = (bx >= cs.x and bx < cs.x + cs.w
+				and by >= cs.y and by < cs.y + cs.h)
+
+			if in_range and child.on_mouse_button(bx - cs.x, by - cs.y,
+					ax, ay, button, state, ...) then
+				return true
+			end
+		end
+
+		return this.ev_mouse_button and this.ev_mouse_button(
+			bx, by, ax, ay, button, state, ...)
+	end
+
 	function this.on_resize(maxw, maxh)
-		this.make_child_layout(nil, nil, maxw, maxh)
+		this.make_child_layout(nil, nil, maxw, maxh, expand)
 	end
 
 	function this.on_pack(minw, minh, maxw, maxh, expand)
-		return this.make_child_layout(nil, nil, maxw, maxh)
+		return this.make_child_layout(nil, nil, maxw, maxh, expand)
 	end
 
 	function this.on_draw(img, bx, by, bw, bh, ax, ay, ...)
@@ -361,6 +391,50 @@ function widget.layouts.hbox_flow(cfg)
 				cs.w, cs.h,
 				ax + sx, ay + sy, ...)
 		end
+	end
+
+	return this
+end
+
+--[[
+	Vertically-biased box flow layout.
+]]
+function widget.layouts.vbox_flow(cfg)
+	local this = widget.layouts.hbox_flow(cfg)
+
+	-- TECHNICALLY THIS IS A MIXIN NOT A CLASS ABSTRACTION SO IT'S OK
+	function this.make_child_layout(minw, minh, maxw, maxh, expand)
+		local _,child
+		local nw,nh = 0,0
+		local x,y = 0,0
+		local next_x = 0
+		local lminw, lminh = this.get_min_dims()
+
+		for _,cs in pairs(this.children) do
+			local child = cs.child
+			cs.w, cs.h = child.pack_sub(nil, nil, maxw, maxh, expand)
+			if maxh and cs.h + y + 1 > maxh then
+				cs.h = math.min(cs.h, maxh)
+				nh = math.max(nh, math.min(cs.h, maxh))
+				x = x + next_x + 1
+				next_x = cs.w
+				cs.y = 0
+				cs.x = x
+				y = cs.h
+			else
+				cs.y = y + 1
+				if y == 0 then cs.y = 0 end
+				cs.x = x
+				next_x = math.max(next_x, cs.w)
+				y = cs.y + cs.h
+				nh = y
+			end
+			nw = math.max(nw, math.min(maxw or (x + cs.w), x + cs.w))
+			child.resize(cs.h, cs.w)
+		end
+
+		--print("HONF", nw, nh)
+		return nw, nh
 	end
 
 	return this
@@ -459,3 +533,23 @@ function widget.text(cfg)
 
 	return this
 end
+
+--[[
+	Helper function to make UI definitions not look silly.
+]]
+function wchild(child, cfg)
+	return { cfg = cfg or {}, child = child }
+end
+
+--[[
+	Function to simulate a click on a widget.
+]]
+
+function widget_mouse_button(wi, wx, wy, ax, ay, button, state, ...)
+	local w, h = wi.get_nom_dims()
+	return ax >= wx and ax < wx + w
+		and ay >= wy and ay < wy + h
+		and wi.on_mouse_button(ax - wx, ay - wy, ax, ay, button, state, ...)
+end
+
+
