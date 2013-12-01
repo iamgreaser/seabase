@@ -18,18 +18,17 @@
   3. This notice may not be removed or altered from any source distribution.
 ]]
 
-function puts(x, y, s)
+function puts(x, y, s, img)
 	local i
 	for i=1,#s do
 		local c = s:byte(i) - 0x20
-		common.img_blit(img_font, x, y, BF_AM_THRES, c*6, 0, 6, 8)
+		common.img_blit(img_font, x, y, BF_AM_THRES, c*6, 0, 6, 8, img)
 		x = x + 6
 	end
 end
 
 widget = {}
 widget.layouts = {}
-
 
 --[[
 	Base class all widgets abstract from.
@@ -74,7 +73,7 @@ widget.layouts = {}
 		Draws this widget and its children at ax, ay.
 		Note, if you're drawing children, use draw_sub.
 
-	this.draw_sub(parent, img, bx, by, bw, bh, ax, ay):
+	this.draw_sub(img, bx, by, bw, bh, ax, ay):
 		Sanely clips the region, gets an image if need be, then calls this.on_draw().
 
 	this.get_img(w, h):
@@ -96,12 +95,17 @@ widget.layouts = {}
 		Note, cfg pertains to the child's positioning and stuff,
 		and depends on what layout you are using and whatnot.
 	
+	this.add_children_batch(cfg):
+		Adds several children to this widget.
+		Everything that has children SHOULD call this before returning!
+		Just use the cfg you were given to create "this".
+	
 	Functions to optionally override:
 
 	this.on_add_child(child, cfg):
 		Adds a child to this widget.
 
-		Default just does nothing.
+		Default just adds the child to the layout when it's not nil.
 
 	w, h = this.on_pack(minw, minh, maxw, maxh, expand):
 		Resize this widget to suit.
@@ -152,8 +156,19 @@ function widget_new(cfg)
 		parent = nil,
 	}; this.this = this
 
-	this.w = math.min(math.max(this.w, this.minw or this.w), this.maxw or this.w)
-	this.h = math.min(math.max(this.h, this.minh or this.h), this.maxh or this.h)
+	if this.w then
+		this.w = math.min(math.max(this.w, this.minw or this.w), this.maxw or this.w)
+	end
+	if this.h then
+		this.h = math.min(math.max(this.h, this.minh or this.h), this.maxh or this.h)
+	end
+
+	function this.resize(w, h)
+		if this.w == w and this.h == h then return end
+
+		this.w, this.h = w, h
+		return this.on_resize(w, h)
+	end
 
 	function this.get_min_dims()
 		return this.minw, this.minh
@@ -196,15 +211,39 @@ function widget_new(cfg)
 	end
 
 	function this.pack_sub(minw, minh, maxw, maxh, expand, ...)
+		minw = minw or this.minw
+		minh = minh or this.minh
+		maxw = maxw or this.maxw
+		maxh = maxh or this.maxh
+
+		if this.minw and this.minw > minw then this.minw = minw end
+		if this.minh and this.minh > minh then this.minh = minh end
+		if this.maxw and this.maxw < maxw then this.maxw = maxw end
+		if this.maxh and this.maxh < maxh then this.maxh = maxh end
+
 		local w, h = this.on_pack(minw, minh, maxw, maxh, expand, ...)
 		-- TODO: sanity checks + image nabbing
-		this.resize(w, h)
+		this.w = w or 1
+		this.h = h or 1
 		return w, h
+	end
+
+	function this.get_img(w, h)
+		return nil -- TODO!
 	end
 
 	function this.add_child(child, cfg)
 		child.set_parent(this)
-		this.on_add_child()
+		this.on_add_child(child, cfg)
+	end
+
+	function this.add_children_batch(cfg)
+		if not cfg.children then return end
+
+		local i, v
+		for i,v in pairs(cfg.children) do
+			this.add_child(v.child, v.cfg)
+		end
 	end
 
 	-- Stuff to override
@@ -217,6 +256,9 @@ function widget_new(cfg)
 		else
 			w, h = this.get_nom_dims()
 		end
+
+		w = math.max(1, w or 1)
+		h = math.max(1, h or 1)
 
 		if this.minw and w < this.minw then w = this.minw end
 		if this.minh and h < this.minh then h = this.minh end
@@ -231,12 +273,18 @@ function widget_new(cfg)
 		return w, h
 	end
 
-	function this.on_draw(parent, img, bx, by, bw, bh, ax, ay, ...)
+	function this.on_draw(img, bx, by, bw, bh, ax, ay, ...)
 		-- override me!
 	end
 
 	function this.on_resize(w, h, ...)
 		-- override me!
+	end
+
+	function this.on_add_child(child, cfg)
+		if this.layout then
+			this.layout.add_child(child, cfg)
+		end
 	end
 
 	function this.is_safe_clip(w, h, ...)
@@ -245,6 +293,80 @@ function widget_new(cfg)
 
 	return this
 end
+
+--[[
+	Horizontally-biased box flow layout.
+]]
+function widget.layouts.hbox_flow(cfg)
+	local this = widget_new(cfg)
+	this.children = {}
+
+	function this.on_add_child(child, cfg)
+		this.children[#this.children + 1] = {
+			child = child, 
+			x = 0, y = 0,
+			w = 0, h = 0,
+		}
+	end
+
+	function this.make_child_layout(minw, minh, maxw, maxh)
+		local _,child
+		local nw,nh = 0,0
+		local x,y = 0,0
+		local next_y = 0
+		local lminw, lminh = this.get_min_dims()
+
+		for _,cs in pairs(this.children) do
+			local child = cs.child
+			cs.w, cs.h = child.pack_sub(nil, nil, maxw, maxh, expand)
+			if maxw and cs.w + x + 1 > maxw then
+				cs.w = math.min(cs.w, maxw)
+				nw = math.max(nw, math.min(cs.w, maxw))
+				y = y + next_y + 1
+				next_y = cs.h
+				cs.x = 0
+				cs.y = y
+				x = cs.w + 1
+			else
+				cs.x = x + 1
+				if x == 0 then cs.x = 0 end
+				cs.y = y
+				next_y = math.max(next_y, cs.h)
+				x = x + cs.w + 1
+				nw = x
+			end
+			nh = math.max(nh, math.min(maxh or (y + cs.h), y + cs.h))
+			child.resize(cs.w, cs.h)
+		end
+
+		--print("HONF", nw, nh)
+		return nw, nh
+	end
+
+	function this.on_resize(maxw, maxh)
+		this.make_child_layout(nil, nil, maxw, maxh)
+	end
+
+	function this.on_pack(minw, minh, maxw, maxh, expand)
+		return this.make_child_layout(nil, nil, maxw, maxh)
+	end
+
+	function this.on_draw(img, bx, by, bw, bh, ax, ay, ...)
+		local _,child
+
+		for _,cs in pairs(this.children) do
+			local child = cs.child
+			local sx, sy = cs.x, cs.y
+			child.draw_sub(img, sx + bx, sy + by,
+				cs.w, cs.h,
+				ax + sx, ay + sy, ...)
+		end
+	end
+
+	return this
+end
+
+widget.layouts.default = widget.layouts.hbox_flow
 
 --[[
 	Root widget.
@@ -276,30 +398,64 @@ function widget.box(cfg)
 	this.minw = cfg.minw or 1
 	this.minh = cfg.minh or 1
 
-	function this.resize(w, h)
-		this.w, this.h = w-2-this.hpad*2, h-2-this.vpad*2
-		this.on_resize(this.w, this.h)
+	function this.on_pack(minw, minh, maxw, maxh, expand)
+		local pw, ph = this.hpad*2+2, this.vpad*2+2
+		local w, h = this.layout.pack_sub(minw, minh, maxw, maxh, expand)
+		local nw, nh = this.get_nom_dims()
+
+		w = w + pw
+		h = h + ph
+		if w < nw then w = nw end
+		if h < nh then h = nh end
+
+		return w, h
 	end
 
-	function this.on_draw(img, bx, by, bw, bh, ax, ay)
+	function this.on_resize(w, h)
+		local pw, ph = this.hpad*2+2, this.vpad*2+2
+		this.layout.resize(w - pw, h - ph)
+	end
+
+	function this.on_draw(img, bx, by, bw, bh, ax, ay, ...)
 		common.draw_rect_fill(img, bx, by, bx+bw-1, by+bh-1,
 			this.inherit("cbg"))
 		common.draw_rect_outl(img, bx, by, bx+bw-1, by+bh-1,
 			this.inherit("cborder"))
+		this.layout.draw_sub(img, bx + this.hpad + 1, by + this.vpad + 1,
+			bw - this.hpad*2 - 2, bh - this.vpad*2 - 2,
+			ax + this.hpad + 1, ay + this.vpad + 1, ...)
 	end
+
+	this.add_children_batch(cfg)
 
 	return this
 end
 
 --[[
-	Horizontally-biased box flow layout.
+	Text widget.
+
+	Displays text.
 ]]
-function widget.layouts.hbox_flow(cfg)
-	local this = {
-		children = cfg.children or {},
-	}; this.this = this
+function widget.text(cfg)
+	local this = widget_new(cfg)
+
+	this.u_text = cfg.u_text
+
+	function this.on_pack(minw, minh, maxw, maxh, expand)
+		local w, h = 0, 1
+		-- TODO: handle newlines
+
+		w = #this.u_text
+
+		return w*6, h*8
+	end
+
+	function this.on_draw(img, bx, by, bw, bh, ax, ay, ...)
+		-- TODO: set this up so it doesn't overflow the text
+		puts(bx, by, this.u_text, img)
+	end
+
+	this.add_children_batch(cfg)
 
 	return this
 end
-
-widget.layouts.default = widget.layouts.hbox_flow

@@ -126,7 +126,32 @@ function set_sec_beg(sec)
 end
 
 whello = widget.box {
-	nomw = 100, nomh = 40,
+	maxw = 100,
+	children = {
+		{cfg = {}, child = widget.box {
+			children = {
+				{cfg = {}, child = widget.text {
+					u_text = "Hello BYOND!",
+				}},
+			},
+		}},
+		{cfg = {}, child = widget.box {
+			nomw = 40, nomh = 60,
+			children = {
+				{cfg = {}, child = widget.text {
+					u_text = "txt",
+				}},
+			},
+		}},
+		{cfg = {}, child = widget.box {
+			nomw = 40, nomh = 60,
+			children = {
+				{cfg = {}, child = widget.text {
+					u_text = "butt",
+				}},
+			},
+		}},
+	},
 }
 whello.pack()
 
@@ -180,7 +205,7 @@ function hook_render(sec_current, sec_delta)
 	end
 	end
 
-	whello.draw(50, 20)
+	whello.draw(150, 20)
 
 	local cx, cy
 	cx = math.floor(mx/16)+1
