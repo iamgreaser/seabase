@@ -127,6 +127,9 @@ end
 
 function hook_render(sec_current, sec_delta)
 	local x,y
+	local mx, my, _, mb
+
+	mx, my, _, _, mb = common.mouse_get()
 
 	set_sec_beg(sec_current)
 
@@ -172,6 +175,12 @@ function hook_render(sec_current, sec_delta)
 	end
 	end
 
+	local cx, cy
+	cx = math.floor(mx/16)+1
+	cy = math.floor(my/16)+1
+
+	common.draw_rect_outl(nil, (cx-1)*16, (cy-1)*16, (cx-1)*16+15, (cy-1)*16+15, 0xFF880000)
+
 	local xbase = ((sec_current - sec_beg) % 5.0) / 5.0
 	xbase = xbase * (320 + 2*100)
 	xbase = xbase - 100
@@ -182,7 +191,6 @@ function hook_render(sec_current, sec_delta)
 		common.img_blit(nil, 320-100, 0, BF_AM_THRES,
 			(x-1)*16, (y-1)*16, 100, 100, nil)
 	end
-	
 
 	local s = "All systems nominal."
 	common.draw_rect_fill(nil, 0, 0, 4 + 6*#s, 12, 0xFF225522)

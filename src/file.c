@@ -142,7 +142,10 @@ void file_parse_any(lua_State *L, const char *data, int len, const char *fmt, co
 		lua_getglobal(L, "loadstring");
 		lua_pushlstring(L, data, len);
 		lua_pushstring(L, fname);
-		lua_call(L, 2, 1);
+		lua_call(L, 2, 2);
+		if(!lua_isfunction(L, -2))
+			luaL_error(L, lua_tostring(L, -1));
+		lua_remove(L, -1);
 	} else if(!strcmp(fmt, "png")) {
 		img_t *img = img_load_png(data, len);
 		if(img == NULL)
