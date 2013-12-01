@@ -27,8 +27,13 @@ function puts(x, y, s, img)
 	end
 end
 
+function cons_print(...)
+	-- TODO: log this to an on-screen console OSLT
+	print(...)
+end
+
 widget = {}
-widget.layouts = {}
+widget.layout = {}
 
 --[[
 	Base class all widgets abstract from.
@@ -311,7 +316,7 @@ end
 --[[
 	Horizontally-biased box flow layout.
 ]]
-function widget.layouts.hbox_flow(cfg)
+function widget.layout.hbox_flow(cfg)
 	local this = widget_new(cfg)
 	this.children = {}
 
@@ -399,8 +404,8 @@ end
 --[[
 	Vertically-biased box flow layout.
 ]]
-function widget.layouts.vbox_flow(cfg)
-	local this = widget.layouts.hbox_flow(cfg)
+function widget.layout.vbox_flow(cfg)
+	local this = widget.layout.hbox_flow(cfg)
 
 	-- TECHNICALLY THIS IS A MIXIN NOT A CLASS ABSTRACTION SO IT'S OK
 	function this.make_child_layout(minw, minh, maxw, maxh, expand)
@@ -440,7 +445,40 @@ function widget.layouts.vbox_flow(cfg)
 	return this
 end
 
-widget.layouts.default = widget.layouts.hbox_flow
+--[[
+	Free layout.
+]]
+function widget.layout.free(cfg)
+	local this = widget_new(cfg)
+	this.children = {}
+
+	function this.on_add_child(child, cfg)
+		this.children[#this.children + 1] = {
+			child = child, 
+			x = cfg.x, y = cfg.y,
+		}
+	end
+
+	local s_on_pack = this.on_pack
+	function this.on_pack(minw, minh, maxw, maxh, expand, ...)
+		local _,cs
+		for _,cs in pairs(this.children) do
+			cs.child.pack_sub(nil, nil, nil, nil, expand, ...)
+		end
+		return s_on_pack(minw, minh, maxw, maxh, expand, ...)
+	end
+
+	function this.on_draw(img, bx, by, bw, bh, ax, ay, ...)
+		local _,cs
+		for _,cs in pairs(this.children) do
+			cs.child.draw_sub(img, bx + cs.x, by + cs.y,
+				bw - cs.x, bh - cs.y,
+				ax + cs.x, ay + cs.y, ...)
+		end
+	end
+end
+
+widget.layout.default = widget.layout.hbox_flow
 
 --[[
 	Root widget.
@@ -449,10 +487,13 @@ widget.layouts.default = widget.layouts.hbox_flow
 ]]
 do
 	local w, h = common.img_get_dims(nil)
+
 	widget.root = widget_new {
 		cbg = 0xFF666666,
 		cborder = 0xFF999999,
 		ctext = 0xFFFFFFFF, -- not like anything else is supported right now
+
+		layout = widget.layout.free {},
 
 		w = w, h = h,
 	}
@@ -465,7 +506,7 @@ end
 ]]
 function widget.box(cfg)
 	local this = widget_new(cfg)
-	this.layout = cfg.layout or widget.layouts.default {}
+	this.layout = cfg.layout or widget.layout.default {}
 	this.hpad = cfg.hpad or 1
 	this.vpad = cfg.vpad or 1
 

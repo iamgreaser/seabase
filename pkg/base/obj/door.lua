@@ -21,6 +21,7 @@
 function door_new(cfg)
 	local this = {
 		x = cfg.x, y = cfg.y,
+		layer = LAYER.WALL,
 
 		tmr_openclose = nil,
 		openness = 0,
@@ -29,9 +30,9 @@ function door_new(cfg)
 		closing = false,
 	}
 
-	--map_vis[this.y][this.x] = TURF.FLOOR
-
 	this.this = this
+
+	--map_vis[this.y][this.x] = TURF.FLOOR
 
 	function this.f_open()
 		this.openness = this.openness + 1
@@ -81,6 +82,16 @@ function door_new(cfg)
 		common.img_blit(img_tiles, bx, by, BF_AM_THRES,
 			16*this.openness, 16*3, 16, 16)
 	end
+
+	function this.examine()
+		cons_print("EX: That's a door.")
+		cons_print("It opens and closes.")
+	end
+
+	this.actions = {
+		{text = "Open", fn = this.open},
+		{text = "Close", fn = this.close},
+	}
 
 	return this
 end

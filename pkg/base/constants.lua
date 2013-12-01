@@ -51,3 +51,9 @@ DIR = {
 	NORTH = 0x08,
 }
 
+LAYER = {
+	FLOOR = 1,
+	OBJ = 2,
+	WALL = 3,
+}
+
