@@ -62,6 +62,12 @@ do
 			ax + this.hpad + 1, ay + this.vpad + 1, ...)
 	end
 
+	function this.on_mouse_button(bx, by, ...)
+		local ox, oy = this.hpad + 1, this.vpad + 1
+		return (this.layout and this.layout.on_mouse_button(bx - ox, by - oy, ...))
+			or (this.ev_mouse_button and this.ev_mouse_button(bx, by, ...))
+	end
+
 	this.add_children_batch(cfg)
 
 	return this
