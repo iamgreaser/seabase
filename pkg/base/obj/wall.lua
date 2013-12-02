@@ -22,6 +22,8 @@ function wall_new(cfg)
 	local this = {
 		x = cfg.x, y = cfg.y,
 		layer = LAYER.WALL,
+		link_wall = true,
+		--link_table = true,
 	}
 
 	this.this = this
@@ -29,15 +31,15 @@ function wall_new(cfg)
 	function this.draw(sec_current, sec_delta, bx, by)
 		local x, y = this.x, this.y
 		local tx, ty = 0, 2
-		local t0 = (x >= #(map_vis[1]) and TURF.WATER) or map_vis[y][x+1]
-		local t1 = (y >= #map_vis and TURF.WATER) or map_vis[y+1][x]
-		local t2 = (x <= 1 and TURF.WATER) or map_vis[y][x-1]
-		local t3 = (y <= 1 and TURF.WATER) or map_vis[y-1][x]
+		local t0 = (x < #(map_vis[1])) and obj_get_top(map_tiles[y][x+1]).link_wall
+		local t1 = (y < #map_vis) and obj_get_top(map_tiles[y+1][x]).link_wall
+		local t2 = (x > 1) and obj_get_top(map_tiles[y][x-1]).link_wall
+		local t3 = (y > 1) and obj_get_top(map_tiles[y-1][x]).link_wall
 		
-		if t0 == TURF.WALL then tx = tx + 1 end
-		if t1 == TURF.WALL then tx = tx + 2 end
-		if t2 == TURF.WALL then tx = tx + 4 end
-		if t3 == TURF.WALL then tx = tx + 8 end
+		if t0 then tx = tx + 1 end
+		if t1 then tx = tx + 2 end
+		if t2 then tx = tx + 4 end
+		if t3 then tx = tx + 8 end
 
 		common.img_blit(img_tiles, bx, by, BF_AM_THRES,
 			16*tx, 16*ty, 16, 16)

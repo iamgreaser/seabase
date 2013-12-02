@@ -25,6 +25,7 @@ cam_cx, cam_cy = 0, 0
 -- load map
 map_loader_data = {
 	base = common.fetch("png", "pkg/maps/firstpost/base.png"),
+	atmosia = common.fetch("png", "pkg/maps/firstpost/atmosia.png"),
 }
 
 -- load images
@@ -40,6 +41,8 @@ for k,v in pairs({
 	"pkg/base/lib/timer.lua",
 	"pkg/base/obj/door.lua",
 	"pkg/base/obj/floor.lua",
+	"pkg/base/obj/pipe.lua",
+	"pkg/base/obj/table.lua",
 	"pkg/base/obj/wall.lua",
 }) do libload[#libload+1] = loadfile(v) end
 for k,v in pairs({
@@ -64,7 +67,8 @@ for i=1,128 do
 	end
 end
 
-map_img_trn = {
+map_img_trn = {}
+map_img_trn.base = {
 	[0x00000000] = function(x, y)
 		return TURF.WATER, {}
 	end,
@@ -105,10 +109,9 @@ map_img_trn = {
 		}
 	end,
 	[0xFFFFFFFF] = function (x, y)
-		return TURF.WALL, {
-			-- TODO: make this a reinforced table
+		return TURF.FLOOR, {
 			floor = {floor_new {x=x, y=y},},
-			wall = {wall_new {x=x, y=y},},
+			obj = {table_new {x=x, y=y},},
 		}
 	end,
 	[0xFFFF00FF] = function (x, y)
@@ -120,7 +123,6 @@ map_img_trn = {
 	end,
 }
 
-
 tick_list = {}
 
 -- Lua is 1-based. Ugh. But we'll cope.
@@ -130,13 +132,27 @@ local x,y
 for y=1,#map_vis do
 	for x=1,#map_vis[y] do
 		local c = common.img_get_pixel(map_loader_data.base, x, y)
+		local c_atmosia = common.img_get_pixel(map_loader_data.atmosia, x, y)
 		if c <= 0x80000000 then c = 0x00000000 end
 		--print(string.format("%08X", c), map_img_trn[c])
-		local ctype, cobjs = map_img_trn[c](x, y)
+		local ctype, cobjs = map_img_trn.base[c](x, y)
+
+		if c_atmosia <= 0x01000000 then c_atmosia = 0
+		else c_atmosia = c_atmosia % 0x1000000 end
 
 		cobjs.floor = cobjs.floor or {}
 		cobjs.obj = cobjs.obj or {}
 		cobjs.wall = cobjs.wall or {}
+
+		if c_atmosia == 0x00FFFF then
+			table.insert(cobjs.floor, pipe_new {x=x, y=y, subtype=PIPE.PIPE})
+		elseif c_atmosia == 0xFFFF00 then
+			table.insert(cobjs.floor, pipe_new {x=x, y=y, subtype=PIPE.VENT})
+		elseif c_atmosia == 0x0000FF then
+			table.insert(cobjs.floor, pipe_new {x=x, y=y, subtype=PIPE.T_WATER_IN})
+		elseif c_atmosia == 0xFF0000 then
+			table.insert(cobjs.floor, pipe_new {x=x, y=y, subtype=PIPE.T_AIR_OUT})
+		end
 
 		map_tiles[y][x] = cobjs
 
@@ -164,11 +180,20 @@ function set_sec_beg(sec)
 	end
 end
 
+function obj_has_any(cobjs, name)
+	local _,l,o
+	for _,l in pairs({"floor", "obj", "wall"}) do
+		for _,o in pairs(cobjs[l]) do
+			if o[name] then return true end
+		end
+	end
+	return false
+end
 function obj_get_top(cobjs)
 	if #cobjs.wall > 0 then return cobjs.wall[#cobjs.wall] end
 	if #cobjs.obj > 0 then return cobjs.obj[#cobjs.obj] end
 	if #cobjs.floor > 0 then return cobjs.floor[#cobjs.floor] end
-	return nil
+	return {fail = true}
 end
 
 wpopups = {}
@@ -200,8 +225,10 @@ function popup_do(x, y)
 	local typ = common.turf_get_type(map, cx, cy)
 	local obj = obj_get_top(cobjs)
 
-	if obj then
-		addi("Examine", obj.examine)
+	if not obj.fail then
+		addi("Examine", obj.examine or function ()
+			cons_print("EX: Whoops, apparently obj.examine is nil.")
+		end)
 		if obj.actions then
 			local _,t
 			for _,t in pairs(obj.actions) do

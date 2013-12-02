@@ -22,8 +22,10 @@ function door_new(cfg)
 	local this = {
 		x = cfg.x, y = cfg.y,
 		layer = LAYER.WALL,
+		link_wall = true,
 
 		tmr_openclose = nil,
+		tmr_waterlock = nil,
 		openness = 0,
 		open_state = false,
 		opening = false,
@@ -34,6 +36,14 @@ function door_new(cfg)
 	}
 
 	this.this = this
+
+	if this.water_lock then
+		this.water_thres = 0.0
+		if cfg.open ~= false then
+			this.open_state = true
+			this.openness = 7
+		end
+	end
 
 	if cfg.open == true then
 		this.open_state = true
@@ -83,13 +93,17 @@ function door_new(cfg)
 
 			local wn = math.max(w0, w1, w2, w3)
 
-			if wn > 0.05 and this.open_state and not this.water_closed then
+			if wn > 0.01 and this.open_state and not this.water_closed then
 				this.water_closed = true
 				this.close()
 			end
 
+			if this.tmr_waterlock then
+				this.tmr_waterlock(sec_current)
+			end
+
 			if this.water_closed then
-				if wn < 0.049 then
+				if wn < 0.0399 and not this.tmr_waterlock then
 					this.water_closed = false
 					this.open()
 				end
