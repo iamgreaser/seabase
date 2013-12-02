@@ -34,7 +34,10 @@ for k,v in pairs({
 	"pkg/base/obj/door.lua",
 	"pkg/base/obj/floor.lua",
 	"pkg/base/obj/wall.lua",
-}) do libload[k] = loadfile(v) end
+}) do libload[#libload+1] = loadfile(v) end
+for k,v in pairs({
+	"door", "floor", "wall",
+}) do libload[#libload+1] = loadfile("pkg/base/obj/" .. v .. ".lua") end
 
 -- run libraries
 for k,v in pairs(libload) do v() end
