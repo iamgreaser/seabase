@@ -75,8 +75,7 @@ map_img_trn = {
 	end,
 	[0xFF333333] = function (x, y)
 		return TURF.FLOOR, {
-			-- TODO: use maint floor tile
-			floor = {floor_new {x=x, y=y}},
+			floor = {floor_new {x=x, y=y, has_tiles=false}},
 		}
 	end,
 	[0xFF666666] = function (x, y)
@@ -102,7 +101,7 @@ map_img_trn = {
 		return TURF.FLOOR, {
 			-- TODO: use waterlock door texture
 			floor = {floor_new {x=x, y=y},},
-			wall = {door_new {x=x, y=y, open=true},},
+			wall = {door_new {x=x, y=y, open=true, u_speed=0.5, water_lock=true},},
 		}
 	end,
 	[0xFFFFFFFF] = function (x, y)
@@ -282,10 +281,6 @@ function hook_render(sec_current, sec_delta)
 	for _,wi in pairs(wpopups) do
 		wi.draw(wi.u_x, wi.u_y)
 	end
-
-	local xbase = ((sec_current - sec_beg) % 5.0) / 5.0
-	xbase = xbase * (320 + 2*100)
-	xbase = xbase - 100
 end
 
 mouse_drag = nil

@@ -28,6 +28,9 @@ function door_new(cfg)
 		open_state = false,
 		opening = false,
 		closing = false,
+		
+		u_speed = cfg.u_speed or 1.0,
+		water_lock = cfg.water_lock or false,
 	}
 
 	this.this = this
@@ -62,6 +65,36 @@ function door_new(cfg)
 	end
 
 	function this.tick(sec_current, sec_delta)
+		if this.water_lock then
+			local t0 = common.turf_get_type(map, this.x - 1, this.y)
+			local t1 = common.turf_get_type(map, this.x, this.y - 1)
+			local t2 = common.turf_get_type(map, this.x + 1, this.y)
+			local t3 = common.turf_get_type(map, this.x, this.y + 1)
+
+			local w0 = common.turf_get_gas(map, this.x - 1, this.y, GAS.WATER)
+			local w1 = common.turf_get_gas(map, this.x, this.y - 1, GAS.WATER)
+			local w2 = common.turf_get_gas(map, this.x + 1, this.y, GAS.WATER)
+			local w3 = common.turf_get_gas(map, this.x, this.y + 1, GAS.WATER)
+
+			w0 = ((t0 == TURF.WALL and 0) or w0)
+			w1 = ((t1 == TURF.WALL and 0) or w1)
+			w2 = ((t2 == TURF.WALL and 0) or w2)
+			w3 = ((t3 == TURF.WALL and 0) or w3)
+
+			local wn = math.max(w0, w1, w2, w3)
+
+			if wn > 0.05 and this.open_state and not this.water_closed then
+				this.water_closed = true
+				this.close()
+			end
+
+			if this.water_closed then
+				if wn < 0.049 then
+					this.water_closed = false
+					this.open()
+				end
+			end
+		end
 		if this.tmr_openclose then
 			this.tmr_openclose(sec_current, sec_delta)
 		end
@@ -71,7 +104,7 @@ function door_new(cfg)
 		if (not this.open_state) or (this.closing) then
 			this.closing = false
 			this.opening = true
-			this.tmr_openclose = timer_new(this.f_open, sec_current, 1.0/8.0)
+			this.tmr_openclose = timer_new(this.f_open, sec_current, this.u_speed/8.0)
 		end
 	end
 
@@ -79,7 +112,7 @@ function door_new(cfg)
 		if (this.open_state) or (this.opening) then
 			this.opening = false
 			this.closing = true
-			this.tmr_openclose = timer_new(this.f_close, sec_current, 1.0/8.0)
+			this.tmr_openclose = timer_new(this.f_close, sec_current, this.u_speed/8.0)
 		end
 	end
 
