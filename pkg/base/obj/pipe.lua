@@ -40,7 +40,7 @@ function pnet_new(cfg)
 			local cpass = #this.pipes
 			if pass >= 0.0000000001 and gas_levels[i] then
 				local level = gas_levels[i] or this.gases[i]
-				local clevel = this.gases[i] / #this.pipes
+				local clevel = this.gases[i]
 				local centre = (clevel + level) / 2.0
 				local diff = (centre - clevel) * pass
 				--if clevel + diff < 0 then diff = -clevel end
@@ -51,7 +51,7 @@ function pnet_new(cfg)
 				--print("diff", i, diff, x, y)
 
 				gas_levels[i] = level
-				this.gases[i] = clevel * #this.pipes
+				this.gases[i] = clevel
 			end
 		end
 	end
@@ -112,6 +112,11 @@ function pipe_new(cfg)
 		layer = LAYER.FLOOR,
 		link_pipe = true,
 		name = cfg.name or PIPE_NAMES[cfg.subtype or PIPE.PIPE],
+
+		u_capacity = cfg.u_capacity or 10.0,
+		u_caplevel = cfg.u_caplevel or 0.0,
+		u_capdrain = cfg.u_capdrain or 0.5,
+		u_capfill = cfg.u_capfill or 5.0,
 
 		subtype = cfg.subtype or PIPE.PIPE,
 
@@ -181,11 +186,16 @@ function pipe_new(cfg)
 				common.turf_set_gas(map, this.x, this.y, i, v)
 			end
 		elseif this.subtype == PIPE.T_WATER_IN then
-			local gas_pass = { [GAS.WATER] = 1.0, }
-			local gas_levels = { [GAS.WATER] = 
-				math.max(-0.1, -this.pnet.gases[GAS.WATER] * 0.02), }
+			local drain_by = math.min(
+					(this.u_capacity - this.u_caplevel),
+						--* (1.0 - math.exp(-this.u_capfill*sec_delta)),
+					this.pnet.gases[GAS.WATER])
+			drain_by = math.max(0, drain_by)
 
-			this.pnet.try_mix(this.x, this.y, gas_pass, gas_levels)
+			this.pnet.gases[GAS.WATER] = this.pnet.gases[GAS.WATER] - drain_by
+			this.u_caplevel = this.u_caplevel + drain_by
+			this.u_caplevel = math.max(0.0, this.u_caplevel - this.u_capdrain * sec_delta)
+			--print("drain", this.u_caplevel, this.pnet.gases[GAS.WATER])
 		elseif this.subtype == PIPE.T_AIR_OUT then
 			local gas_pass = { [GAS.O2] = 1.0, [GAS.N2] = 1.0 }
 			local gas_levels = { [GAS.O2] = 0.2, [GAS.N2] = 0.8 }
