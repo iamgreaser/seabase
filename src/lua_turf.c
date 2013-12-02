@@ -44,6 +44,7 @@ int fl_turf_get_gas(lua_State *L)
 	if(x < 1 || y < 1 || x > map->w || y > map->h)
 		return luaL_error(L, "invalid coords %d, %d", x, y);
 
+	type--;
 	if(type < 0 || type >= GAS_COUNT) return luaL_error(L, "invalid gas type %d", type);
 
 	x--; y--;
@@ -79,6 +80,7 @@ int fl_turf_set_gas(lua_State *L)
 	if(x < 1 || y < 1 || x > map->w || y > map->h)
 		return luaL_error(L, "invalid coords %d, %d", x, y);
 
+	type--;
 	if(type < 0 || type >= GAS_COUNT) return luaL_error(L, "invalid gas type %d", type);
 
 	x--; y--;

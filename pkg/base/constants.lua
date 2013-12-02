@@ -31,12 +31,12 @@ TURF = {
 }
 
 GAS = {
-	WATER = 0,
+	WATER = 1,
 
-	O2 = 1,
-	N2 = 2,
-	CO2 = 3,
-	CH4 = 4,
+	O2 = 2,
+	N2 = 3,
+	CO2 = 4,
+	CH4 = 5,
 }
 
 DIR = {

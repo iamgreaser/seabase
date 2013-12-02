@@ -31,19 +31,59 @@ function pnet_new(cfg)
 		gases = {0, 0, 0, 0, 0},
 	}; this.this = this
 
+	function this.try_mix(x, y, gas_pass, gas_levels)
+		-- TODO!
+		local i
+		for i=1,#this.gases do
+			local pass = gas_pass[i] or 0.0
+			pass = math.max(0.0, math.min(1.0, pass))
+			local cpass = #this.pipes
+			if pass >= 0.0000000001 and gas_levels[i] then
+				local level = gas_levels[i] or this.gases[i]
+				local clevel = this.gases[i] / #this.pipes
+				local centre = (clevel + level) / 2.0
+				local diff = (centre - clevel) * pass
+
+				clevel = clevel + diff
+				level = level - diff
+
+				--print("diff", i, diff, x, y)
+
+				gas_levels[i] = level
+				this.gases[i] = clevel * #this.pipes
+			end
+		end
+	end
+
 	function this.add(obj)
 		if obj.pnet then obj.pnet.remove(obj) end
 		obj.pnet = this
+		if #this.pipes == 1 then
+			this.gases = {0,0,0,0,0}
+			this.gases[GAS.O2] = 0.2
+			this.gases[GAS.N2] = 0.8
+		else
+			local i
+			local diff = (1 + #this.pipes)/(#this.pipes)
+			for i=1,#this.gases do
+				this.gases[i] = this.gases[i] * diff
+			end
+		end
 		table.insert(this.pipes, obj)
 	end
 
 	function this.remove(obj)
-		obj.pnet = nil
+		if obj.pnet == this then obj.pnet = nil end
 
 		local i,o
 		for i,o in pairs(this.pipes) do
 			if o == obj then
 				table.remove(this.pipes, i)
+				local i
+				local diff = (#this.pipes)/(1 + #this.pipes)
+				for i=1,#this.gases do
+					this.gases[i] = this.gases[i] * diff
+				end
 				break
 			end
 		end
@@ -104,6 +144,46 @@ function pipe_new(cfg)
 		end
 	end
 
+	function this.tick(sec_current, sec_delta)
+		if this.subtype == PIPE.VENT then
+			local gas_pass = {}
+			local gas_levels = {
+				[GAS.WATER] = common.turf_get_gas(map, this.x, this.y, GAS.WATER),
+				[GAS.O2] = common.turf_get_gas(map, this.x, this.y, GAS.O2),
+				[GAS.N2] = common.turf_get_gas(map, this.x, this.y, GAS.N2),
+			}
+
+			local gas_cmp = this.pnet.gases
+
+			if gas_cmp[GAS.WATER] < gas_levels[GAS.WATER] then
+				gas_pass[GAS.WATER] = 1.0
+			end
+			if gas_cmp[GAS.O2] > gas_levels[GAS.O2] then
+				gas_pass[GAS.O2] = 1.0
+			end
+			if gas_cmp[GAS.N2] > gas_levels[GAS.N2] then
+				gas_pass[GAS.N2] = 1.0
+			end
+
+			this.pnet.try_mix(this.x, this.y, gas_pass, gas_levels)
+
+			local i,v
+			for i,v in pairs(gas_levels) do
+				common.turf_set_gas(map, this.x, this.y, i, v)
+			end
+		elseif this.subtype == PIPE.T_WATER_IN then
+			local gas_pass = { [GAS.WATER] = 1.0, }
+			local gas_levels = { [GAS.WATER] = 0.0, }
+
+			this.pnet.try_mix(this.x, this.y, gas_pass, gas_levels)
+		elseif this.subtype == PIPE.T_AIR_OUT then
+			local gas_pass = { [GAS.O2] = 1.0, [GAS.N2] = 1.0 }
+			local gas_levels = { [GAS.O2] = 0.2, [GAS.N2] = 0.8 }
+
+			this.pnet.try_mix(this.x, this.y, gas_pass, gas_levels)
+		end
+	end
+
 	function this.examine()
 		if this.subtype == PIPE.PIPE then
 			cons_print("EX: That's a pipe.")
@@ -113,9 +193,11 @@ function pipe_new(cfg)
 		elseif this.subtype == PIPE.T_WATER_IN then
 			cons_print("EX: That's a water tank.")
 			cons_print("It sucks water into it.")
+			cons_print("Currently powered by science.")
 		elseif this.subtype == PIPE.T_AIR_OUT then
 			cons_print("EX: That's an air tank.")
 			cons_print("It outputs air.")
+			cons_print("Currently powered by magic.")
 		else
 			cons_print("EX: That's an undocumented piece of Atmosian equipment.")
 			cons_print("Better not mess with it.")
