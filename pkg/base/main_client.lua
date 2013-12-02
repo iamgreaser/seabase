@@ -118,7 +118,19 @@ map_img_trn.base = {
 		cam_x = x*16
 		cam_y = y*16
 		return TURF.FLOOR, {
-			floor = {floor_new {x=x, y=y},},
+			floor = {
+				floor_new {x=x, y=y},
+				floor_new {x=x, y=y},
+				floor_new {x=x, y=y},
+				floor_new {x=x, y=y},
+				floor_new {x=x, y=y},
+				floor_new {x=x, y=y},
+				floor_new {x=x, y=y},
+				floor_new {x=x, y=y},
+				floor_new {x=x, y=y},
+				floor_new {x=x, y=y},
+				floor_new {x=x, y=y},
+			},
 		}
 	end,
 }
@@ -216,7 +228,6 @@ function popup_do(x, y)
 		this.u_x = x
 		this.u_y = y
 		this.pack()
-		local sw, sh = common.img_get_dims(nil)
 		if this.h + this.u_y > sh then this.u_y = sh - this.h end
 		if this.w + this.u_x > sw then this.u_x = sw - this.w end
 		wpopups[#wpopups + 1] = this
@@ -269,6 +280,7 @@ function popup_do(x, y)
 
 	local itmenu = widget.box {
 		layout = widget.layout.vbox_flow {},
+		maxw = sw, maxh = sh,
 	}
 
 	local function addi2(obj)

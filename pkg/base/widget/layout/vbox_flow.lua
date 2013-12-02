@@ -50,7 +50,7 @@ do
 				cs.x = x
 				next_x = math.max(next_x, cs.w)
 				y = cs.y + cs.h
-				nh = y
+				nh = math.max(nh, y)
 			end
 			nw = math.max(nw, math.min(maxw or (x + cs.w), x + cs.w))
 			child.resize(cs.h, cs.w)

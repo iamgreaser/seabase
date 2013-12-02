@@ -59,7 +59,7 @@ do
 				cs.y = y
 				next_y = math.max(next_y, cs.h)
 				x = cs.x + cs.w
-				nw = x
+				nw = math.max(nw, x)
 			end
 			nh = math.max(nh, math.min(maxh or (y + cs.h), y + cs.h))
 			child.resize(cs.w, cs.h)
