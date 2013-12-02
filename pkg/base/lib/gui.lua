@@ -339,6 +339,7 @@ do
 end
 
 widget.box = loadfile("pkg/base/widget/box.lua")
+widget.drawobj = loadfile("pkg/base/widget/drawobj.lua")
 widget.text = loadfile("pkg/base/widget/text.lua")
 
 --[[

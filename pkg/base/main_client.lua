@@ -274,7 +274,9 @@ function popup_do(x, y)
 	local function addi2(obj)
 		text = (obj and (obj.name or "*FIXME*")) or "Water"
 		itmenu.add_child(widget.box {
-			children = { wchild(widget.text {u_text = text}) },
+			layout = widget.layout.hbox_flow {},
+			children = { wchild(widget.drawobj {u_obj = obj} ),
+				wchild(widget.text {u_text = text}) },
 			ev_mouse_button = function(bx, by, ax, ay, button, state)
 				if button == 0 and not state then
 					do_pop(gen_for_obj(obj), ax, ay)

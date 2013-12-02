@@ -86,7 +86,7 @@ do
 	end
 
 	function this.on_resize(maxw, maxh)
-		this.make_child_layout(nil, nil, maxw, maxh, expand)
+		--this.make_child_layout(nil, nil, maxw, maxh, nil)
 	end
 
 	function this.on_pack(minw, minh, maxw, maxh, expand)
