@@ -1,3 +1,7 @@
+![Your watery doom.](http://i.imgur.com/fgnjdzK.png)
+
+----
+
 Sea Base Omega is currently a bunch of hacked together code to draw a pretty picture.
 
 What it's meant to be is a 2D tile-based underwater atmospheric simulation with a game tacked on.
