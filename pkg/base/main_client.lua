@@ -284,7 +284,7 @@ function popup_do(x, y)
 
 	local _,l,o,i
 	for _,l in pairs({"wall","obj","floor"}) do
-		for i=1,#cobjs[l] do
+		for i=#cobjs[l],1,-1 do
 			addi2(cobjs[l][i])
 		end
 	end
