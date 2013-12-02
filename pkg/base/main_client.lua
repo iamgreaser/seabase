@@ -208,55 +208,95 @@ function popup_do(x, y)
 	csx = math.max(0, math.min(16*#map_vis[1] - sw, csx))
 	csy = math.max(0, math.min(16*#map_vis - sh, csy))
 
-	local items = {}
+	local cx, cy = math.floor((x+csx)/16)+1, math.floor((y+csy)/16)+1
+	local cobjs = map_tiles[cy][cx] 
+	local typ = common.turf_get_type(map, cx, cy)
 
-	local function addi(text, fn)
-		items[#items+1] = wchild(widget.box {
+	local function do_pop(this, x, y)
+		this.u_x = x
+		this.u_y = y
+		this.pack()
+		local sw, sh = common.img_get_dims(nil)
+		if this.h + this.u_y > sh then this.u_y = sh - this.h end
+		if this.w + this.u_x > sw then this.u_x = sw - this.w end
+		wpopups[#wpopups + 1] = this
+	end
+
+	local function gen_for_obj(obj)
+		local items = {}
+
+		local function addi(text, fn)
+			items[#items+1] = wchild(widget.box {
+				children = { wchild(widget.text {u_text = text}) },
+				ev_mouse_button = function(bx, by, ax, ay, button, state)
+					if button == 0 and not state then
+						return fn()
+					end
+				end})
+		end
+
+		if obj then
+			items[#items+1] = wchild(widget.text {u_text = obj.name or "*FIXME*"})
+			addi("Examine", obj.examine or function ()
+				cons_print("EX: Whoops, apparently obj.examine is nil.")
+			end)
+			if obj.actions then
+				local _,t
+				for _,t in pairs(obj.actions) do
+					addi(t.text, t.fn)
+				end
+			end
+		else
+			items[#items+1] = wchild(widget.text {u_text = "Water"})
+			addi("Examine", function ()
+				cons_print("EX: That's the ocean.")
+				cons_print("Keep out of reach of batteries.")
+			end)
+		end
+
+		local this = widget.box {
+			maxw = 100,
+			layout = widget.layout.vbox_flow {},
+			children = items,
+		}
+
+		return this
+	end
+
+	local obj = obj_get_top(cobjs)
+	if obj.fail then obj = nil end
+	local menu = gen_for_obj(obj)
+
+	local itmenu = widget.box {
+		layout = widget.layout.vbox_flow {},
+	}
+
+	local function addi2(obj)
+		text = (obj and (obj.name or "*FIXME*")) or "Water"
+		itmenu.add_child(widget.box {
 			children = { wchild(widget.text {u_text = text}) },
 			ev_mouse_button = function(bx, by, ax, ay, button, state)
 				if button == 0 and not state then
-					return fn()
+					do_pop(gen_for_obj(obj), ax, ay)
 				end
 			end})
 	end
 
-	local cx, cy = math.floor((x+csx)/16)+1, math.floor((y+csy)/16)+1
-	local cobjs = map_tiles[cy][cx] 
-	local typ = common.turf_get_type(map, cx, cy)
-	local obj = obj_get_top(cobjs)
-
-	if not obj.fail then
-		items[#items+1] = wchild(widget.text {u_text = obj.name or "*FIXME*"})
-		addi("Examine", obj.examine or function ()
-			cons_print("EX: Whoops, apparently obj.examine is nil.")
-		end)
-		if obj.actions then
-			local _,t
-			for _,t in pairs(obj.actions) do
-				addi(t.text, t.fn)
-			end
+	local _,l,o,i
+	for _,l in pairs({"wall","obj","floor"}) do
+		for i=1,#cobjs[l] do
+			addi2(cobjs[l][i])
 		end
-	else
-		items[#items+1] = wchild(widget.text {u_text = obj.name or "Water"})
-		addi("Examine", function ()
-			cons_print("EX: That's the ocean.")
-			cons_print("Keep out of reach of batteries.")
-		end)
+	end
+	if #cobjs.floor == 0 then
+		addi2(nil)
 	end
 
-	local this = widget.box {
-		maxw = 100,
-		layout = widget.layout.vbox_flow {},
-		children = items,
+	local outer = widget.box {
+		layout = widget.layout.hbox_flow {},
+		children = { wchild(menu), wchild(itmenu) },
 	}
-
-	this.u_x = x
-	this.u_y = y
-	this.pack()
-	local sw, sh = common.img_get_dims(nil)
-	if this.h + this.u_y > sh then this.u_y = sh - this.h end
-	if this.w + this.u_x > sw then this.u_x = sw - this.w end
-	wpopups[#wpopups + 1] = this
+	do_pop(outer, x, y)
 end
 
 function hook_render(sec_current, sec_delta)
@@ -355,11 +395,11 @@ function hook_mouse(x, y, button, state)
 	else
 		if not state then
 			local _,wi
-			for _,wi in pairs(wpopups) do
+			local nwpopups = wpopups
+			wpopups = {}
+			for _,wi in pairs(nwpopups) do
 				widget_mouse_button(wi, wi.u_x, wi.u_y, x, y, button, state)
 			end
-
-			popup_clear()
 		end
 	end
 end

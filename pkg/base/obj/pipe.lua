@@ -182,7 +182,8 @@ function pipe_new(cfg)
 			end
 		elseif this.subtype == PIPE.T_WATER_IN then
 			local gas_pass = { [GAS.WATER] = 1.0, }
-			local gas_levels = { [GAS.WATER] = -0.02, }
+			local gas_levels = { [GAS.WATER] = 
+				math.max(-0.1, -this.pnet.gases[GAS.WATER] * 0.02), }
 
 			this.pnet.try_mix(this.x, this.y, gas_pass, gas_levels)
 		elseif this.subtype == PIPE.T_AIR_OUT then

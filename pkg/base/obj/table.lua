@@ -22,7 +22,7 @@ function table_new(cfg)
 	local this = {
 		x = cfg.x, y = cfg.y,
 		layer = LAYER.OBJ,
-		name = "Floor",
+		name = "Table",
 		link_table = true,
 	}
 
@@ -46,20 +46,20 @@ function table_new(cfg)
 	end
 
 	function this.examine()
-		cons_print("EX: That's a reinforced table.")
+		cons_print("EX: That's a table.")
 	end
 
 	this.actions = {
 		{text = "Delete", fn = function ()
 			local cobjs = map_tiles[this.y][this.x]
 			local i,o
-			for i,o in pairs(cobjs.wall) do
+			for i,o in pairs(cobjs.obj) do
 				if o == this then
-					table.remove(cobjs.wall, i)
+					table.remove(cobjs.obj, i)
 					break
 				end
 			end
-			if true or #cobjs.wall == 0 then
+			if #cobjs.wall == 0 and #cobjs.obj == 0 then
 				if #cobjs.floor == 0 then
 					common.turf_set_type(map, this.x, this.y, TURF.WATER)
 					map_vis[this.y][this.x] = TURF.WATER
