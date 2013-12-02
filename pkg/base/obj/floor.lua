@@ -22,6 +22,8 @@ function floor_new(cfg)
 	local this = {
 		x = cfg.x, y = cfg.y,
 		layer = LAYER.FLOOR,
+		name = "Floor",
+
 		has_tiles = true,
 	}; this.this = this
 

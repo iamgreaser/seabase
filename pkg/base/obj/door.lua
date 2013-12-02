@@ -23,6 +23,7 @@ function door_new(cfg)
 		x = cfg.x, y = cfg.y,
 		layer = LAYER.WALL,
 		link_wall = true,
+		name = "Door",
 
 		tmr_openclose = nil,
 		openness = 0,

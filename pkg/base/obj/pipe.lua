@@ -43,6 +43,7 @@ function pnet_new(cfg)
 				local clevel = this.gases[i] / #this.pipes
 				local centre = (clevel + level) / 2.0
 				local diff = (centre - clevel) * pass
+				--if clevel + diff < 0 then diff = -clevel end
 
 				clevel = clevel + diff
 				level = level - diff
@@ -98,11 +99,19 @@ end
 
 pnet_main = pnet_new {}
 
+PIPE_NAMES = {
+	[PIPE.PIPE] = "Pipe",
+	[PIPE.VENT] = "Vent",
+	[PIPE.T_WATER_IN] = "Water Tank",
+	[PIPE.T_AIR_OUT] = "Air Tank",
+}
+
 function pipe_new(cfg)
 	local this = {
 		x = cfg.x, y = cfg.y,
 		layer = LAYER.FLOOR,
 		link_pipe = true,
+		name = cfg.name or PIPE_NAMES[cfg.subtype or PIPE.PIPE],
 
 		subtype = cfg.subtype or PIPE.PIPE,
 
@@ -173,7 +182,7 @@ function pipe_new(cfg)
 			end
 		elseif this.subtype == PIPE.T_WATER_IN then
 			local gas_pass = { [GAS.WATER] = 1.0, }
-			local gas_levels = { [GAS.WATER] = 0.0, }
+			local gas_levels = { [GAS.WATER] = -0.02, }
 
 			this.pnet.try_mix(this.x, this.y, gas_pass, gas_levels)
 		elseif this.subtype == PIPE.T_AIR_OUT then

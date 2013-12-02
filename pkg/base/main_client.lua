@@ -226,6 +226,7 @@ function popup_do(x, y)
 	local obj = obj_get_top(cobjs)
 
 	if not obj.fail then
+		items[#items+1] = wchild(widget.text {u_text = obj.name or "*FIXME*"})
 		addi("Examine", obj.examine or function ()
 			cons_print("EX: Whoops, apparently obj.examine is nil.")
 		end)
@@ -236,6 +237,7 @@ function popup_do(x, y)
 			end
 		end
 	else
+		items[#items+1] = wchild(widget.text {u_text = obj.name or "Water"})
 		addi("Examine", function ()
 			cons_print("EX: That's the ocean.")
 			cons_print("Keep out of reach of batteries.")

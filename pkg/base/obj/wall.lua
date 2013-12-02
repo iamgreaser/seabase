@@ -22,6 +22,7 @@ function wall_new(cfg)
 	local this = {
 		x = cfg.x, y = cfg.y,
 		layer = LAYER.WALL,
+		name = "Wall",
 		link_wall = true,
 		--link_table = true,
 	}
