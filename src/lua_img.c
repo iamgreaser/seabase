@@ -67,6 +67,51 @@ int fl_img_get_dims(lua_State *L)
 	lua_pushinteger(L, img->h);
 	return 2;
 }
+/**
+	\brief Lua: Reads a pixel from an image.
+
+	\param img Image to read from.
+	\param x Coordinate.
+	\param y Coordinate.
+	\param def Default return value for out of range pixels. Defaults to 0x00000000.
+		Can be absolutely anything.
+
+	\returns ARGB pixel data as an integer, or argument "def" if out of range.
+*/
+int fl_img_get_pixel(lua_State *L)
+{
+	int top = lua_gettop(L);
+	if(top < 3) return luaL_error(L, "not enough arguments for img_get_pixel");
+
+	ud_t *img_ud = NULL;
+
+	if(!lua_isnil(L, 1))
+		img_ud = ud_get_block(L, UD_IMG, "img", 1);
+	
+	img_t *img = (img_ud == NULL ? NULL : (img_t *)(img_ud->v));
+	
+	int x = lua_tointeger(L, 2);
+	int y = lua_tointeger(L, 3);
+	int w = (img == NULL ? screen->w : img->w);
+	int h = (img == NULL ? screen->h : img->h);
+
+	if(x >= 0 && x < w && y >= 0 && y < h)
+	{
+		if(img == NULL)
+		{
+			uint8_t *pty = ((uint8_t *)(screen->pixels)) + y*screen->pitch;
+			uint32_t *ptx = ((uint32_t *)pty) + x;
+			lua_pushinteger(L, *ptx);
+		} else {
+			lua_pushinteger(L, img->data[y*w + x]);
+		}
+	} else {
+		if(top < 4) lua_pushinteger(L, 0x00000000);
+		else lua_pushvalue(L, 4);
+	}
+
+	return 1;
+}
 
 /**
 	\brief Lua: Blits from an image/the screen to an image/the screen.
@@ -76,10 +121,7 @@ int fl_img_get_dims(lua_State *L)
 	WARNING: When blitting to/from the same image/screen,
 	the rectangles MUST NOT OVERLAP; otherwise, behaviour is UNDEFINED.
 
-	\param fname Filename of image to load.
-	\param fmt File format (default: "png").
-
-	\return Image userdata.
+	See docs/lua_api.txt for the parameters; or better still, look at the source ;)
 */
 int fl_img_blit(lua_State *L)
 {

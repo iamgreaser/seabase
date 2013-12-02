@@ -20,6 +20,13 @@
 
 -- TODO: wrap loadfile
 
+cam_cx, cam_cy = 0, 0
+
+-- load map
+map_loader_data = {
+	base = common.fetch("png", "pkg/maps/firstpost/base.png"),
+}
+
 -- load images
 img_tiles = common.fetch("png", "pkg/base/gfx/hello.png")
 img_font = common.fetch("png", "pkg/base/gfx/font-mini.png")
@@ -44,51 +51,6 @@ for k,v in pairs(libload) do v() end
 
 testlua = loadfile("pkg/base/test.lua") -- regression testing
 
-local test_map = {
-	"     ####           ",
-	"     #..#           ",
-	"     #..#           ",
-	"  ####..#           ",
-	"  =.=...#           ",
-	"  #####=#           ",
-	"     #..####        ",
-	"     #.$.=.=        ",
-	"     #..####        ",
-	"   ###=#########    ",
-	"   #...........=    ",
-	"   #...........=    ",
-	"   #############    ",
-}
-
-test_map_trn = {
-	[" "] = function(x, y)
-		return TURF.WATER, {}
-	end,
-	["."] = function (x, y)
-		return TURF.FLOOR, {
-			floor = {floor_new {x=x, y=y}},
-		}
-	end,
-	["$"] = function (x, y)
-		return TURF.FLOOR, {
-			floor = {floor_new {x=x, y=y},},
-			-- TODO: add drain
-		}
-	end,
-	["#"] = function (x, y)
-		return TURF.WALL, {
-			floor = {floor_new {x=x, y=y},},
-			wall = {wall_new {x=x, y=y},},
-		}
-	end,
-	["="] = function (x, y)
-		return TURF.WALL, {
-			floor = {floor_new {x=x, y=y},},
-			wall = {door_new {x=x, y=y},},
-		}
-	end,
-}
-
 obj_list = {}
 map_tiles = {}
 map_vis = {}
@@ -102,19 +64,76 @@ for i=1,128 do
 	end
 end
 
+map_img_trn = {
+	[0x00000000] = function(x, y)
+		return TURF.WATER, {}
+	end,
+	[0xFF999999] = function (x, y)
+		return TURF.FLOOR, {
+			floor = {floor_new {x=x, y=y}},
+		}
+	end,
+	[0xFF333333] = function (x, y)
+		return TURF.FLOOR, {
+			-- TODO: use maint floor tile
+			floor = {floor_new {x=x, y=y}},
+		}
+	end,
+	[0xFF666666] = function (x, y)
+		return TURF.WALL, {
+			floor = {floor_new {x=x, y=y},},
+			wall = {wall_new {x=x, y=y},},
+		}
+	end,
+	[0xFF00AA00] = function (x, y)
+		return TURF.WALL, {
+			floor = {floor_new {x=x, y=y},},
+			wall = {door_new {x=x, y=y},},
+		}
+	end,
+	[0xFFFF5500] = function (x, y)
+		return TURF.WALL, {
+			-- TODO: use airlock door texture
+			floor = {floor_new {x=x, y=y},},
+			wall = {door_new {x=x, y=y},},
+		}
+	end,
+	[0xFFAA0000] = function (x, y)
+		return TURF.FLOOR, {
+			-- TODO: use waterlock door texture
+			floor = {floor_new {x=x, y=y},},
+			wall = {door_new {x=x, y=y, open=true},},
+		}
+	end,
+	[0xFFFFFFFF] = function (x, y)
+		return TURF.WALL, {
+			-- TODO: make this a reinforced table
+			floor = {floor_new {x=x, y=y},},
+			wall = {wall_new {x=x, y=y},},
+		}
+	end,
+	[0xFFFF00FF] = function (x, y)
+		cam_x = x*16
+		cam_y = y*16
+		return TURF.FLOOR, {
+			floor = {floor_new {x=x, y=y},},
+		}
+	end,
+}
+
+
 tick_list = {}
 
 -- Lua is 1-based. Ugh. But we'll cope.
-print(#(test_map[1]), #test_map)
---map = common.map_new(#(test_map[1]), #test_map)
 map = common.map_new(128, 128)
 
 local x,y
-for y=1,#test_map do
-	local s = test_map[y]
-	for x=1,#s do
-		local c = s:sub(x,x)
-		local ctype, cobjs = test_map_trn[c](x, y)
+for y=1,#map_vis do
+	for x=1,#map_vis[y] do
+		local c = common.img_get_pixel(map_loader_data.base, x, y)
+		if c <= 0x80000000 then c = 0x00000000 end
+		--print(string.format("%08X", c), map_img_trn[c])
+		local ctype, cobjs = map_img_trn[c](x, y)
 
 		cobjs.floor = cobjs.floor or {}
 		cobjs.obj = cobjs.obj or {}
@@ -160,6 +179,11 @@ function popup_clear()
 end
 
 function popup_do(x, y)
+	local sw, sh = common.img_get_dims(nil)
+	local csx, csy = cam_x - math.floor(sw/2), cam_y - math.floor(sh/2)
+	csx = math.max(0, math.min(16*#map_vis[1] - sw, csx))
+	csy = math.max(0, math.min(16*#map_vis - sh, csy))
+
 	local items = {}
 
 	local function addi(text, fn)
@@ -172,7 +196,7 @@ function popup_do(x, y)
 			end})
 	end
 
-	local cx, cy = math.floor(x/16)+1, math.floor(y/16)+1
+	local cx, cy = math.floor((x+csx)/16)+1, math.floor((y+csy)/16)+1
 	local cobjs = map_tiles[cy][cx] 
 	local typ = common.turf_get_type(map, cx, cy)
 	local obj = obj_get_top(cobjs)
@@ -215,8 +239,14 @@ function hook_render(sec_current, sec_delta)
 
 	set_sec_beg(sec_current)
 
-	for y=1,math.min(1+13-1,#test_map) do
-	for x=1,math.min(1+20-1,#(test_map[1])) do
+	local sw, sh = common.img_get_dims(nil)
+	local csx, csy = cam_x - math.floor(sw/2), cam_y - math.floor(sh/2)
+	csx = math.max(0, math.min(16*#map_vis[1] - sw, csx))
+	csy = math.max(0, math.min(16*#map_vis - sh, csy))
+	local csxt, csyt = math.ceil(csx/16), math.ceil(csy/16)
+
+	for y=csyt,math.min(csyt+13,#map_vis) do
+	for x=csxt,math.min(csxt+20,#(map_vis[1])) do
 		local tx, ty
 		local typ = map_vis[y][x]
 		local water = common.turf_get_gas(map, x, y, GAS.WATER)
@@ -228,11 +258,11 @@ function hook_render(sec_current, sec_delta)
 		local _,l,o
 		for _,l in pairs({"floor", "obj", "wall"}) do
 			for _,o in pairs(cobjs[l]) do
-				o.draw(sec_current, sec_delta, (x-1)*16, (y-1)*16, map_vis, test_map)
+				o.draw(sec_current, sec_delta, (x-1)*16 - csx, (y-1)*16 - csy, map_vis, test_map)
 			end
 
 			if l == "floor" and water >= 0 then
-				common.img_blit(img_tiles, (x-1)*16, (y-1)*16, BF_AM_THRES,
+				common.img_blit(img_tiles, (x-1)*16 - csx, (y-1)*16 - csy, BF_AM_THRES,
 					16*water, 16*1, 16, 16)
 			end
 		end
@@ -240,10 +270,13 @@ function hook_render(sec_current, sec_delta)
 	end
 
 	local cx, cy
-	cx = math.floor(mx/16)+1
-	cy = math.floor(my/16)+1
+	cx = math.floor((mx+csx)/16)+1
+	cy = math.floor((my+csy)/16)+1
 
-	common.draw_rect_outl(nil, (cx-1)*16, (cy-1)*16, (cx-1)*16+15, (cy-1)*16+15, 0xFF880000)
+	common.draw_rect_outl(nil,
+		(cx-1)*16-csx, (cy-1)*16-csy,
+		(cx-1)*16+15-csx, (cy-1)*16+15-csy,
+		0xFF880000)
 
 	local _,wi
 	for _,wi in pairs(wpopups) do
@@ -255,6 +288,7 @@ function hook_render(sec_current, sec_delta)
 	xbase = xbase - 100
 end
 
+mouse_drag = nil
 tmr_atmos = nil
 function hook_tick(sec_current, sec_delta)
 	set_sec_beg(sec_current)
@@ -262,6 +296,15 @@ function hook_tick(sec_current, sec_delta)
 	tmr_atmos = tmr_atmos or timer_new(function(sec)
 		common.map_tick_atmos(map)
 	end, sec_current, 1.0/50.0)
+
+	if mouse_drag then
+		local mx, my = common.mouse_get()
+		local dx, dy = mx - mouse_drag[1], my - mouse_drag[2]
+		cam_x = cam_x - dx
+		cam_y = cam_y - dy
+		mouse_drag[1] = mx
+		mouse_drag[2] = my
+	end
 
 	local i
 	for i=1,#tick_list do
@@ -273,7 +316,14 @@ function hook_tick(sec_current, sec_delta)
 end
 
 function hook_mouse(x, y, button, state)
-	if button == 2 then
+	if button == 1 then
+		if state then
+			local mx, my = common.mouse_get()
+			mouse_drag = {mx, my}
+		else
+			mouse_drag = nil
+		end
+	elseif button == 2 then
 		if state then
 			popup_clear()
 			popup_do(x, y)

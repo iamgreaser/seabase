@@ -175,6 +175,7 @@ int main(int argc, char *argv[])
 
 	ADDFN(fl_img_new, "img_new");
 	ADDFN(fl_img_get_dims, "img_get_dims");
+	ADDFN(fl_img_get_pixel, "img_get_pixel");
 	ADDFN(fl_img_blit, "img_blit");
 
 	ADDFN(fl_map_new, "map_new");

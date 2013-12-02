@@ -32,6 +32,11 @@ function door_new(cfg)
 
 	this.this = this
 
+	if cfg.open == true then
+		this.open_state = true
+		this.openness = 7
+	end
+
 	--map_vis[this.y][this.x] = TURF.FLOOR
 
 	function this.f_open()

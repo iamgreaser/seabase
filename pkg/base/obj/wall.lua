@@ -26,11 +26,11 @@ function wall_new(cfg)
 
 	this.this = this
 
-	function this.draw(sec_current, sec_delta, bx, by, map_vis, test_map)
+	function this.draw(sec_current, sec_delta, bx, by)
 		local x, y = this.x, this.y
 		local tx, ty = 0, 2
-		local t0 = (x >= #(test_map[1]) and TURF.WATER) or map_vis[y][x+1]
-		local t1 = (y >= #test_map and TURF.WATER) or map_vis[y+1][x]
+		local t0 = (x >= #(map_vis[1]) and TURF.WATER) or map_vis[y][x+1]
+		local t1 = (y >= #map_vis and TURF.WATER) or map_vis[y+1][x]
 		local t2 = (x <= 1 and TURF.WATER) or map_vis[y][x-1]
 		local t3 = (y <= 1 and TURF.WATER) or map_vis[y-1][x]
 		
