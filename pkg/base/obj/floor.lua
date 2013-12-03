@@ -29,11 +29,11 @@ function floor_new(cfg)
 
 	if cfg.has_tiles ~= nil then this.has_tiles = cfg.has_tiles end
 
-	function this.draw(sec_current, sec_delta, bx, by)
+	function this.draw(img, sec_current, sec_delta, bx, by)
 		local tx, ty = 2, 0
 		if this.has_tiles then tx = 1 end
 		common.img_blit(img_tiles, bx, by, BF_AM_THRES,
-			16*tx, 16*ty, 16, 16)
+			16*tx, 16*ty, 16, 16, img)
 	end
 
 	function this.examine()

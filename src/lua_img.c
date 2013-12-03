@@ -146,7 +146,7 @@ int fl_img_blit(lua_State *L)
 
 	ud_t *dest_img_ud = NULL;
 	if(top >= 9 && !lua_isnil(L, 9))
-		dest_img_ud = ud_get_block(L, UD_IMG, "img", 1);
+		dest_img_ud = ud_get_block(L, UD_IMG, "img", 9);
 	
 	//printf("lua blit %i %i %i %i %i %i\n", sx, sy, dx, dy, bw, bh);
 	if(src_img_ud == NULL)

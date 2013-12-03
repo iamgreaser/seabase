@@ -28,7 +28,7 @@ function table_new(cfg)
 
 	this.this = this
 
-	function this.draw(sec_current, sec_delta, bx, by)
+	function this.draw(img, sec_current, sec_delta, bx, by)
 		local x, y = this.x, this.y
 		local tx, ty = 0, 6
 		local t0 = (x < #(map_vis[1])) and obj_get_top(map_tiles[y][x+1]).link_table
@@ -42,7 +42,7 @@ function table_new(cfg)
 		if t3 then tx = tx + 8 end
 
 		common.img_blit(img_tiles, bx, by, BF_AM_THRES,
-			16*tx, 16*ty, 16, 16)
+			16*tx, 16*ty, 16, 16, img)
 	end
 
 	function this.examine()

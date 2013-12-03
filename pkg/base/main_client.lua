@@ -20,6 +20,9 @@
 
 -- TODO: wrap loadfile
 
+-- adjust the GC - it's kinda necessary
+collectgarbage("setpause", 105) -- wait for a 5% increase - 100% inc is too high
+
 cam_cx, cam_cy = 0, 0
 
 -- load map
@@ -340,12 +343,12 @@ function hook_render(sec_current, sec_delta)
 		local _,l,o
 		for _,l in pairs({"floor", "obj", "wall"}) do
 			for _,o in pairs(cobjs[l]) do
-				o.draw(sec_current, sec_delta, (x-1)*16 - csx, (y-1)*16 - csy, map_vis, test_map)
+				o.draw(timg, sec_current, sec_delta, (x-1)*16 - csx, (y-1)*16 - csy, map_vis, test_map)
 			end
 
 			if l == "floor" and water >= 0 then
 				common.img_blit(img_tiles, (x-1)*16 - csx, (y-1)*16 - csy, BF_AM_THRES,
-					16*water, 16*1, 16, 16)
+					16*water, 16*1, 16, 16, timg)
 			end
 		end
 	end

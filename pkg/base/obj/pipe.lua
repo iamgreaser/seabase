@@ -125,7 +125,7 @@ function pipe_new(cfg)
 
 	pnet_main.add(this) -- FIXME: Use a flood fill and get this onto a network.
 
-	function this.draw(sec_current, sec_delta, bx, by)
+	function this.draw(img, sec_current, sec_delta, bx, by)
 		local x, y = this.x, this.y
 		local tx, ty = 0, 7
 		local t0 = (x < #(map_vis[1])) and obj_has_any(map_tiles[y][x+1], "link_pipe")
@@ -139,22 +139,22 @@ function pipe_new(cfg)
 		if t3 then tx = tx + 8 end
 
 		common.img_blit(img_tiles, bx, by, BF_AM_THRES,
-			16*tx, 16*ty, 16, 16)
+			16*tx, 16*ty, 16, 16, img)
 
 		if this.subtype == PIPE.PIPE then
 			-- yeah.
 		elseif this.subtype == PIPE.VENT then
 			tx, ty = 5, 0
 			common.img_blit(img_tiles, bx, by, BF_AM_THRES,
-				16*tx, 16*ty, 16, 16)
+				16*tx, 16*ty, 16, 16, img)
 		elseif this.subtype == PIPE.T_WATER_IN then
 			tx, ty = 3, 0
 			common.img_blit(img_tiles, bx, by, BF_AM_THRES,
-				16*tx, 16*ty, 16, 16)
+				16*tx, 16*ty, 16, 16, img)
 		elseif this.subtype == PIPE.T_AIR_OUT then
 			tx, ty = 4, 0
 			common.img_blit(img_tiles, bx, by, BF_AM_THRES,
-				16*tx, 16*ty, 16, 16)
+				16*tx, 16*ty, 16, 16, img)
 		end
 	end
 

@@ -35,7 +35,7 @@ do
 		}
 	end
 
-	function this.make_child_layout(minw, minh, maxw, maxh, expand)
+	function this.make_child_layout(maxw, maxh, expand)
 		local _,child
 		local nw,nh = 0,0
 		local x,y = 0,0
@@ -44,7 +44,7 @@ do
 
 		for _,cs in pairs(this.children) do
 			local child = cs.child
-			cs.w, cs.h = child.pack_sub(nil, nil, maxw, maxh, expand)
+			cs.w, cs.h = child.pack_sub(maxw, maxh, expand)
 			if maxw and cs.w + x + 1 > maxw then
 				cs.w = math.min(cs.w, maxw)
 				nw = math.max(nw, math.min(cs.w, maxw))
@@ -62,7 +62,6 @@ do
 				nw = math.max(nw, x)
 			end
 			nh = math.max(nh, math.min(maxh or (y + cs.h), y + cs.h))
-			child.resize(cs.w, cs.h)
 		end
 
 		--print("HONF", nw, nh)
@@ -85,12 +84,8 @@ do
 			bx, by, ax, ay, button, state, ...)
 	end
 
-	function this.on_resize(maxw, maxh)
-		--this.make_child_layout(nil, nil, maxw, maxh, nil)
-	end
-
-	function this.on_pack(minw, minh, maxw, maxh, expand)
-		return this.make_child_layout(nil, nil, maxw, maxh, expand)
+	function this.on_pack(maxw, maxh, expand)
+		return this.make_child_layout(maxw, maxh, expand)
 	end
 
 	function this.on_draw(img, bx, by, bw, bh, ax, ay, ...)

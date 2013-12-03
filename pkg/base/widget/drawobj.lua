@@ -34,8 +34,7 @@ do
 	local this = widget_new(cfg)
 	this.u_obj = cfg.u_obj
 
-	function this.on_pack(minw, minh, maxw, maxh, expand)
-		--print(minw, minh, maxw, maxh)
+	function this.on_pack(maxw, maxh, expand)
 		if this.u_obj then return 16, 16
 		else return 1, 1 end
 	end
@@ -43,7 +42,7 @@ do
 	function this.on_draw(img, bx, by, bw, bh, ax, ay, ...)
 		-- TODO: sort out the APIs and whatnot
 		if this.u_obj then
-			this.u_obj.draw(nil, nil, ax, ay)
+			this.u_obj.draw(img, nil, nil, bx, by)
 		end
 	end
 

@@ -30,7 +30,7 @@ do
 
 	this.u_text = cfg.u_text
 
-	function this.on_pack(minw, minh, maxw, maxh, expand)
+	function this.on_pack(maxw, maxh, expand)
 		local w, h = 0, 1
 		-- TODO: handle newlines
 

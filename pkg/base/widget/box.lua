@@ -34,9 +34,9 @@ do
 	this.minw = cfg.minw or 1
 	this.minh = cfg.minh or 1
 
-	function this.on_pack(minw, minh, maxw, maxh, expand)
+	function this.on_pack(maxw, maxh, expand)
 		local pw, ph = this.hpad*2+2, this.vpad*2+2
-		local w, h = this.layout.pack_sub(minw, minh, maxw, maxh, expand)
+		local w, h = this.layout.pack_sub(maxw, maxh, expand)
 		local nw, nh = this.get_nom_dims()
 
 		w = w + pw
@@ -45,11 +45,6 @@ do
 		if h < nh then h = nh end
 
 		return w, h
-	end
-
-	function this.on_resize(w, h)
-		local pw, ph = this.hpad*2+2, this.vpad*2+2
-		this.layout.resize(w - pw, h - ph)
 	end
 
 	function this.on_draw(img, bx, by, bw, bh, ax, ay, ...)

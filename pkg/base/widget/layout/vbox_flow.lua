@@ -26,7 +26,7 @@ do
 	local this = widget.layout.hbox_flow(cfg)
 
 	-- TECHNICALLY THIS IS A MIXIN NOT A CLASS ABSTRACTION SO IT'S OK
-	function this.make_child_layout(minw, minh, maxw, maxh, expand)
+	function this.make_child_layout(maxw, maxh, expand)
 		local _,child
 		local nw,nh = 0,0
 		local x,y = 0,0
@@ -35,7 +35,7 @@ do
 
 		for _,cs in pairs(this.children) do
 			local child = cs.child
-			cs.w, cs.h = child.pack_sub(nil, nil, maxw, maxh, expand)
+			cs.w, cs.h = child.pack_sub(maxw, maxh, expand)
 			if maxh and cs.h + y + 1 > maxh then
 				cs.h = math.min(cs.h, maxh)
 				nh = math.max(nh, math.min(cs.h, maxh))
@@ -53,7 +53,6 @@ do
 				nh = math.max(nh, y)
 			end
 			nw = math.max(nw, math.min(maxw or (x + cs.w), x + cs.w))
-			child.resize(cs.h, cs.w)
 		end
 
 		--print("HONF", nw, nh)

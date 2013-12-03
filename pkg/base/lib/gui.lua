@@ -70,8 +70,8 @@ widget.layout = {}
 		Calculates this widget's and its childrens' sizes and positions.
 		Returns width and height.
 
-	w, h = this.pack_sub(minw, minh, maxw, maxh, expand):
-		Calls this.on_pack() and this.resize().
+	w, h = this.pack_sub(maxw, maxh, expand):
+		Calls this.on_pack().
 		Does some sanity checks, too.
 
 	this.draw(ax, ay):
@@ -81,14 +81,10 @@ widget.layout = {}
 	this.draw_sub(img, bx, by, bw, bh, ax, ay):
 		Sanely clips the region, gets an image if need be, then calls this.on_draw().
 
-	this.get_img(w, h):
+	img, iw, ih = this.get_img(w, h):
 		Gets an image for rendering a w by h rectangle.
 		Returns nil if one is not necessary.
-		Calls this.is_safe_clip() and this.resize() internally.
-
-	this.resize(w, h):
-		Resize this widget.
-		Calls this.on_resize() and may invalidate img.
+		Calls this.is_safe_clip() internally.
 	
 	this.set_parent(parent):
 		Sets this widget's parent.
@@ -112,16 +108,14 @@ widget.layout = {}
 
 		Default just adds the child to the layout when it's not nil.
 
-	w, h = this.on_pack(minw, minh, maxw, maxh, expand):
+	w, h = this.on_pack(maxw, maxh, expand):
 		Resize this widget to suit.
 		Any of these arguments may be nil.
 		Return your new width and height.
 
 		"expand" is a boolean.
-		If it is false, you should aim for the minimum dimensions.
+		If it is false, you should aim for your minimum possible dimensions.
 		If it is true, you should aim for the maximum dimensions.
-
-		this.resize() is called by this.pack().
 
 	result = this.is_safe_clip(w, h):
 		Returns true if this widget can clip safely.
@@ -167,6 +161,7 @@ function widget_new(cfg)
 		layout = cfg.layout,
 		cbg = cfg.cbg, cborder = cfg.cborder, ctext = cfg.ctext,
 		parent = nil,
+		img_w = nil, img_h = nil,
 		ev_mouse_button = cfg.ev_mouse_button,
 	}; this.this = this
 
@@ -215,35 +210,50 @@ function widget_new(cfg)
 	end
 
 	function this.draw_sub(img, bx, by, bw, bh, ax, ay, ...)
-		-- TODO: sanity checks
-		return this.on_draw(this.get_img() or img,
-			bx, by, bw, bh, ax, ay, ...)
+		-- TODO: sanity checks?
+		local nimg, iw, ih = this.get_img(bw, bh)
+		if nimg then
+			local ret = this.on_draw(nimg, 0, 0, iw, ih, ax, ay, ...)
+			--common.img_blit(nimg, bx, by, BF_AM_DIRECT, 0, 0, bw, bh, img)
+			common.img_blit(nimg, bx, by, BF_AM_THRES, 0, 0, bw, bh, img)
+		else
+			return this.on_draw(img, bx, by, bw, bh, ax, ay, ...)
+		end
 	end
 
 	function this.pack()
-		return this.pack_sub(nil, nil, nil, nil, false)
+		return this.pack_sub(nil, nil, false)
 	end
 
-	function this.pack_sub(minw, minh, maxw, maxh, expand, ...)
+	function this.pack_sub(maxw, maxh, expand, ...)
 		minw = minw or this.minw
 		minh = minh or this.minh
 		maxw = maxw or this.maxw
 		maxh = maxh or this.maxh
 
-		if this.minw and this.minw > minw then this.minw = minw end
-		if this.minh and this.minh > minh then this.minh = minh end
-		if this.maxw and this.maxw < maxw then this.maxw = maxw end
-		if this.maxh and this.maxh < maxh then this.maxh = maxh end
+		local w, h = this.on_pack(maxw, maxh, expand, ...)
 
-		local w, h = this.on_pack(minw, minh, maxw, maxh, expand, ...)
-		-- TODO: sanity checks + image nabbing
 		this.w = w or 1
 		this.h = h or 1
-		return w, h
+
+		local nw, nh = w, h
+
+		if maxw and nw > maxw then nw = maxw end
+		if maxh and nh > maxh then nh = maxh end
+
+		return nw, nh
 	end
 
 	function this.get_img(w, h)
-		return nil -- TODO!
+		if this.is_safe_clip(w, h) then return nil end
+
+		if w ~= this.img_w or h ~= this.img_h then this.img = nil end
+		this.img = this.img or common.img_new(w, h)
+
+		this.img_w = w
+		this.img_h = h
+
+		return this.img, this.w, this.h
 	end
 
 	function this.add_child(child, cfg)
@@ -266,7 +276,7 @@ function widget_new(cfg)
 			or (this.ev_mouse_button and this.ev_mouse_button(...))
 	end
 
-	function this.on_pack(minw, minh, maxw, maxh, expand, ...)
+	function this.on_pack(maxw, maxh, expand, ...)
 		-- Sane default
 		local w, h 
 
@@ -284,8 +294,6 @@ function widget_new(cfg)
 		if this.maxw and w > this.maxw then w = this.maxw end
 		if this.maxh and h > this.maxh then h = this.maxh end
 
-		if minw and w < minw then w = minw end
-		if minh and h < minh then h = minh end
 		if maxw and w > maxw then w = maxw end
 		if maxh and h > maxh then h = maxh end
 
@@ -296,10 +304,6 @@ function widget_new(cfg)
 		-- override me!
 	end
 
-	function this.on_resize(w, h, ...)
-		-- override me!
-	end
-
 	function this.on_add_child(child, cfg)
 		if this.layout then
 			this.layout.add_child(child, cfg)
@@ -307,7 +311,7 @@ function widget_new(cfg)
 	end
 
 	function this.is_safe_clip(w, h, ...)
-		return true
+		return w >= this.w and h >= this.h
 	end
 
 	return this

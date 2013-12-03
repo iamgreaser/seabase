@@ -35,12 +35,12 @@ do
 	end
 
 	local s_on_pack = this.on_pack
-	function this.on_pack(minw, minh, maxw, maxh, expand, ...)
+	function this.on_pack(maxw, maxh, expand, ...)
 		local _,cs
 		for _,cs in pairs(this.children) do
-			cs.child.pack_sub(nil, nil, nil, nil, expand, ...)
+			cs.child.pack_sub(nil, nil, expand, ...)
 		end
-		return s_on_pack(minw, minh, maxw, maxh, expand, ...)
+		return s_on_pack(maxw, maxh, expand, ...)
 	end
 
 	function this.on_draw(img, bx, by, bw, bh, ax, ay, ...)
