@@ -211,6 +211,44 @@ function obj_get_top(cobjs)
 	return {fail = true}
 end
 
+do
+	local clist = {}
+	
+	local function addi(tx, ty, num, is_sel)
+		local function addi_drawobj()
+			local this = widget.drawobj {u_obj = true}
+
+			function this.on_draw(img, bx, by, bw, bh, ax, ay, ...)
+				common.img_blit(img_tiles, bx, by, BF_AM_THRES,
+					16*tx, 16*ty, 16, 16, img)
+			end
+
+			return { wchild(this), wchild(widget.text {u_text = "" .. num})}
+		end
+
+		clist[#clist+1] = wchild(widget.box {
+			cbg = is_sel and 0xFF800000,
+			layout = widget.layout.vbox_flow {},
+			children = addi_drawobj(),
+		})
+	end
+	
+	wtiles = widget.layout.hbox_flow {}
+	addi(13, 1, 1)
+	addi(1, 0, 2)
+	addi(2, 0, 3)
+	addi(0, 2, 4)
+	addi(0, 3, 5, true)
+	addi(7, 4, 6)
+	addi(0, 6, 7)
+	addi(15, 7, 8)
+	addi(5, 0, 9)
+	addi(3, 0, "-")
+	addi(4, 0, "=")
+	wtiles.add_children_batch({children = clist})
+	wtiles.pack()
+end
+
 wpopups = {}
 
 function popup_clear()
@@ -363,6 +401,7 @@ function hook_render(sec_current, sec_delta)
 		(cx-1)*16+15-csx, (cy-1)*16+15-csy,
 		0xFF880000)
 
+	wtiles.draw(2, 2)
 	local _,wi
 	for _,wi in pairs(wpopups) do
 		wi.draw(wi.u_x, wi.u_y)

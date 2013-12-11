@@ -18,3 +18,15 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 */
 #include "common.h"
 
+net_user_t user_local;
+net_user_t user_server_addr;
+net_user_t user_remote[USER_MAX];
+int user_remote_count = 0;
+
+void net_handle_packet(uint8_t *data, int len, int chan)
+{
+	(void)data;
+	(void)len;
+	(void)chan;
+}
+

@@ -98,7 +98,7 @@ int fl_fetch(lua_State *L)
 
 	printf("fetch [%s] [%s]\n", fmt, fname);
 
-	switch(file_sec_check(fname, is_client, 0))
+	switch(file_sec_check(fname, L == L_client, 0))
 	{
 		case SEC_LOCAL: {
 			int len = 0;

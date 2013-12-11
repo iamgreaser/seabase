@@ -18,14 +18,15 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 */
 #include "common.h"
 
-SDL_Surface *real_screen;
-SDL_Surface *screen;
-lua_State *L_client;
-lua_State *L_server;
+SDL_Surface *real_screen = NULL;
+SDL_Surface *screen = NULL;
+lua_State *L_client = NULL;
+lua_State *L_server = NULL;
 map_t *map_server = NULL;
 int64_t time_current, time_prev;
 
 int is_client = 1;
+int is_server = 1;
 
 /**
 	\brief Prints error info to stderr.
@@ -195,23 +196,46 @@ int main(int argc, char *argv[])
 	lua_setglobal(L_server, "server");
 	printf("Functions loaded\n");
 
-	SDL_WM_SetCaption("Sea Base Omega - 0.0 prealpha", NULL);
-	real_screen = SDL_SetVideoMode(960, 600, 32, 0);
-	screen = SDL_CreateRGBSurface(SDL_SWSURFACE, 320, 200, 32,
-		0x000000FF, 0x0000FF00, 0x00FF0000, 0xFF000000);
-
-	lua_getglobal(L_client, "common");
-	lua_getfield(L_client, -1, "fetch");
-	lua_remove(L_client, -2);
-	lua_pushstring(L_client, "lua");
-	lua_pushstring(L_client, "pkg/base/main_client.lua");
-	lua_call(L_client, 2, 1);
-	if(1)
+	if(is_server)
 	{
-		// TODO: use pcall
-		lua_call(L_client, 0, 0);
-	} else {
-		printf("File failed to compile: %s\n", lua_tostring(L_client, -1));
+		printf("init server\n");
+		lua_getglobal(L_server, "common");
+		lua_getfield(L_server, -1, "fetch");
+		lua_remove(L_server, -2);
+		lua_pushstring(L_server, "lua");
+		lua_pushstring(L_server, "pkg/base/main_server.lua");
+		lua_call(L_server, 2, 1);
+		if(1)
+		{
+			// TODO: use pcall
+			lua_call(L_server, 0, 0);
+		} else {
+			printf("File failed to compile: %s\n", lua_tostring(L_server, -1));
+		}
+	}
+
+	if(is_client)
+	{
+		printf("init client\n");
+
+		SDL_WM_SetCaption("Sea Base Omega - 0.0 prealpha", NULL);
+		real_screen = SDL_SetVideoMode(960, 600, 32, 0);
+		screen = SDL_CreateRGBSurface(SDL_SWSURFACE, 320, 200, 32,
+			0x000000FF, 0x0000FF00, 0x00FF0000, 0xFF000000);
+
+		lua_getglobal(L_client, "common");
+		lua_getfield(L_client, -1, "fetch");
+		lua_remove(L_client, -2);
+		lua_pushstring(L_client, "lua");
+		lua_pushstring(L_client, "pkg/base/main_client.lua");
+		lua_call(L_client, 2, 1);
+		if(1)
+		{
+			// TODO: use pcall
+			lua_call(L_client, 0, 0);
+		} else {
+			printf("File failed to compile: %s\n", lua_tostring(L_client, -1));
+		}
 	}
 
 	printf("init done\n");
@@ -220,75 +244,98 @@ int main(int argc, char *argv[])
 	while(!quitflag)
 	{
 		int x, y;
-		// clear screen
-		memset(screen->pixels, 0, screen->pitch*screen->h);
 
 		// update timer
 		time_prev = time_current;
 		time_current = time_get_us();
 
-		// TODO: use pcall
-		lua_getglobal(L_client, "hook_tick");
-		if(!lua_isnil(L_client, -1))
+		if(is_server)
 		{
-			lua_pushnumber(L_client, ((double)time_current)/1000000.0);
-			lua_pushnumber(L_client, ((double)(time_current - time_prev))/1000000.0);
-			lua_call(L_client, 2, 0);
-		} else {
-			printf("hook_tick DNE\n");
-			lua_pop(L_client, 1);
-		}
-
-		// TODO: use pcall
-		lua_getglobal(L_client, "hook_render");
-		if(!lua_isnil(L_client, -1))
-		{
-			lua_pushnumber(L_client, ((double)time_current)/1000000.0);
-			lua_pushnumber(L_client, ((double)(time_current - time_prev))/1000000.0);
-			lua_call(L_client, 2, 0);
-		} else {
-			printf("hook_render DNE\n");
-			lua_pop(L_client, 1);
-		}
-
-		// manual 3x upscaling of image
-		for(y = 0; y < 200; y++)
-		{
-			uint32_t *d0 = (uint32_t *)(real_screen->pixels + (y*3+0)*real_screen->pitch);
-			uint32_t *d1 = (uint32_t *)(real_screen->pixels + (y*3+1)*real_screen->pitch);
-			uint32_t *d2 = (uint32_t *)(real_screen->pixels + (y*3+2)*real_screen->pitch);
-			uint32_t *s = (uint32_t *)(screen->pixels + y*screen->pitch);
-
-			for(x = 0; x < 320; x++)
+			// TODO: use pcall
+			lua_getglobal(L_server, "hook_tick");
+			if(!lua_isnil(L_server, -1))
 			{
-				*(d0++) = *(d1++) = *(d2++) = *s;
-				*(d0++) = *(d1++) = *(d2++) = *s;
-				*(d0++) = *(d1++) = *(d2++) = *(s++);
+				lua_pushnumber(L_server, ((double)time_current)/1000000.0);
+				lua_pushnumber(L_server, ((double)(time_current - time_prev))/1000000.0);
+				lua_call(L_server, 2, 0);
+			} else {
+				printf("server hook_tick DNE\n");
+				lua_pop(L_server, 1);
 			}
 		}
 
-		SDL_Flip(real_screen);
+		if(is_client)
+		{
+			// clear screen
+			memset(screen->pixels, 0, screen->pitch*screen->h);
 
+			// TODO: use pcall
+			lua_getglobal(L_client, "hook_tick");
+			if(!lua_isnil(L_client, -1))
+			{
+				lua_pushnumber(L_client, ((double)time_current)/1000000.0);
+				lua_pushnumber(L_client, ((double)(time_current - time_prev))/1000000.0);
+				lua_call(L_client, 2, 0);
+			} else {
+				printf("hook_tick DNE\n");
+				lua_pop(L_client, 1);
+			}
+
+			// TODO: use pcall
+			lua_getglobal(L_client, "hook_render");
+			if(!lua_isnil(L_client, -1))
+			{
+				lua_pushnumber(L_client, ((double)time_current)/1000000.0);
+				lua_pushnumber(L_client, ((double)(time_current - time_prev))/1000000.0);
+				lua_call(L_client, 2, 0);
+			} else {
+				printf("hook_render DNE\n");
+				lua_pop(L_client, 1);
+			}
+
+			// manual 3x upscaling of image
+			for(y = 0; y < 200; y++)
+			{
+				uint32_t *d0 = (uint32_t *)(real_screen->pixels + (y*3+0)*real_screen->pitch);
+				uint32_t *d1 = (uint32_t *)(real_screen->pixels + (y*3+1)*real_screen->pitch);
+				uint32_t *d2 = (uint32_t *)(real_screen->pixels + (y*3+2)*real_screen->pitch);
+				uint32_t *s = (uint32_t *)(screen->pixels + y*screen->pitch);
+
+				for(x = 0; x < 320; x++)
+				{
+					*(d0++) = *(d1++) = *(d2++) = *s;
+					*(d0++) = *(d1++) = *(d2++) = *s;
+					*(d0++) = *(d1++) = *(d2++) = *(s++);
+				}
+			}
+
+			SDL_Flip(real_screen);
+		}
+
+		// TODO: use a different sleep function
 		SDL_Delay(10);
 
-		SDL_Event ev;
-		while(SDL_PollEvent(&ev))
-		switch(ev.type)
+		if(is_client)
 		{
-			case SDL_QUIT:
-				quitflag = 1;
-				break;
-			case SDL_MOUSEBUTTONUP:
-			case SDL_MOUSEBUTTONDOWN:
-				input_mouse_update_button(L_client,
-					ev.button.x, ev.button.y,
-					ev.button.button - 1,
-					ev.type == SDL_MOUSEBUTTONDOWN);
-				break;
-			case SDL_MOUSEMOTION:
-				input_mouse_update_pos(L_client,
-					ev.motion.x, ev.motion.y);
-				break;
+			SDL_Event ev;
+			while(SDL_PollEvent(&ev))
+			switch(ev.type)
+			{
+				case SDL_QUIT:
+					quitflag = 1;
+					break;
+				case SDL_MOUSEBUTTONUP:
+				case SDL_MOUSEBUTTONDOWN:
+					input_mouse_update_button(L_client,
+						ev.button.x, ev.button.y,
+						ev.button.button - 1,
+						ev.type == SDL_MOUSEBUTTONDOWN);
+					break;
+				case SDL_MOUSEMOTION:
+					input_mouse_update_pos(L_client,
+						ev.motion.x, ev.motion.y);
+					break;
+			}
 		}
 	}
 

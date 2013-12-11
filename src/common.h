@@ -27,7 +27,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include <sys/time.h>
 
 #include <SDL.h>
-//include <enet/enet.h>
+#include <enet/enet.h>
 
 #include <lua.h>
 #include <lualib.h>
@@ -56,6 +56,14 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #define BF_AM_THRES    0x00000001
 #define BF_AM_BLEND    0x00000002
 #define BF_AM_DITHER   0x00000003
+
+enum
+{
+	CHAN_DATA = 0,
+	CHAN_FILE,
+
+	CHAN_COUNT
+};
 
 enum
 {
@@ -165,6 +173,25 @@ typedef struct map
 	cell_t c[];
 } map_t;
 
+typedef struct net_packet net_packet_t;
+struct net_packet
+{
+	net_packet_t *next;
+	uint8_t *data;
+	int len;
+	int chan;
+};
+
+#define USER_MAX 512
+typedef struct net_user
+{
+	int idx;
+	ENetAddress addr;
+	ENetHost *host;
+	net_packet_t *rhead, **rtail;
+	net_packet_t *shead, **stail;
+} net_user_t;
+
 // blit.c
 void blit_raw(
 	uint32_t *sd, int sw, int sp, int sh, int sx, int sy,
@@ -238,4 +265,7 @@ img_t *img_load_png(const char *data, int len);
 void eprintf(const char *fmt, ...);
 extern SDL_Surface *screen;
 extern int is_client;
+extern int is_server;
+extern lua_State *L_client;
+extern lua_State *L_server;
 
