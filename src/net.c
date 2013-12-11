@@ -23,8 +23,17 @@ net_user_t user_server_addr;
 net_user_t user_remote[USER_MAX];
 int user_remote_count = 0;
 
-void net_handle_packet(uint8_t *data, int len, int chan)
+/**
+	\brief Handles a received packet for a net_user_t.
+
+	\param user
+	\param data
+	\param len
+	\param chan
+*/
+void net_handle_packet(net_user_t *user, uint8_t *data, int len, int chan)
 {
+	(void)user;
 	(void)data;
 	(void)len;
 	(void)chan;

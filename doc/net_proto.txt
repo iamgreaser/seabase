@@ -1,0 +1,38 @@
+Protocol uses ENet, 2 channels.
+Channel 0 = custom data as defined by the Lua code.
+Channel 1 = file protocol, as documented here:
+
+.u8/.u16/.u32/s8/.s16/.s32 should be self-explanatory.
+.i8/.i16/.i32 are for cases where we don't care about the sign.
+.f32/.f64 are floats of different widths.
+.z is a NUL-terminated ("ASCIIZ") string.
+
+Each packet starts with a byte indicating what it is, and then...
+
+0x01 (REQ) resid.i32 ftype.z fname.z:
+	C->S ONLY
+	Requests a file of type ftype, name fname.
+
+0x02 (OPEN) resid.i32 csizehint.u32:
+	S->C ONLY
+	Starts sending a file.
+
+	Note, the server can ONLY send ONE file at a time,
+	BUT the client can queue requests.
+
+0x03 (WRITE) cdata[]:
+	S->C ONLY
+	Sends some file data.
+
+	Note, the data is compressed as a zlib stream.
+
+0x04 (CLOSE) usize.u32:
+	S->C ONLY
+	Marks the end of the file.
+	The client should then extract the file,
+	given usize as the uncompressed size.
+
+0x05 (STOP) resid.i32:
+	C->S: Tells the server to stop sending a file.
+	S->C: Tells the client that the sever failed to send the file for some reason.
+

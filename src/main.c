@@ -223,6 +223,7 @@ int main(int argc, char *argv[])
 		screen = SDL_CreateRGBSurface(SDL_SWSURFACE, 320, 200, 32,
 			0x000000FF, 0x0000FF00, 0x00FF0000, 0xFF000000);
 
+		// TODO: fetch this over the network without everything dying
 		lua_getglobal(L_client, "common");
 		lua_getfield(L_client, -1, "fetch");
 		lua_remove(L_client, -2);

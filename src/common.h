@@ -67,6 +67,15 @@ enum
 
 enum
 {
+	NET_FILE_REQ = 0x01,
+	NET_FILE_OPEN,
+	NET_FILE_WRITE,
+	NET_FILE_CLOSE,
+	NET_FILE_STOP,
+};
+
+enum
+{
 	SEC_FORBID = 0,
 	SEC_LOCAL,
 	SEC_REMOTE,
@@ -188,6 +197,7 @@ typedef struct net_user
 	int idx;
 	ENetAddress addr;
 	ENetHost *host;
+	ud_t *ud; // NULL == not fetching, otherwise it's fetching something
 	net_packet_t *rhead, **rtail;
 	net_packet_t *shead, **stail;
 } net_user_t;
